@@ -14,8 +14,9 @@ class EditorApp:
         # Main Window
         root.geometry("480x240")
         root.title("The Feud Survey Editor")
-        root.iconphoto(True, PhotoImage(file=path.realpath(r"..\assets\images\FamilyFeudIcon.png")))
+        root.iconphoto(True, PhotoImage(file=path.realpath(r"..\assets\images\icon.png")))
         root.configure(background=self.BG_COLOR)
+        root.protocol("WM_DELETE_WINDOW", self.on_close)
         # File Name
         Label(root, text="File Name", background=self.BG_COLOR).grid(row=0, column=0)
         self.fn_entry = Entry(root, width=46)
@@ -53,19 +54,34 @@ class EditorApp:
         for i in range(5):
             root.grid_columnconfigure(i, weight=1, uniform="col")
 
+    def on_close(self):
+        ret = askquestion("Confirm Action", "Are you sure you want to close the editor?")
+        if ret == "yes":
+            self.root.destroy()
+
     def load(self):
         if not self.validate_filename():
             return
         # Warn of risk of overwriting
-        ret = askquestion("Confirm Action",
-                          "This will overwrite the current values in the editor. Are you sure you want to continue?")
-        if ret == "no":
-            return
+        edited = False
+        if self.sq_entry.get():
+            edited = True
+        else:
+            for i in range(8):
+                if self.entries[i].get() or self.spinboxes[i].get() != "1":
+                    edited = True
+                    break
+        if edited:
+            ret = askquestion("Confirm Action",
+                              "This will overwrite the current values in the editor. Are you sure you want to continue?")
+            if ret == "no":
+                return
         # Attempt load survey from file
-        if not Survey.load_survey_file(path.realpath(r"..\surveys\\" + self.fn_entry.get() + ".survey")):
+        survey = Survey.load_survey_file(path.realpath(r"..\surveys\\" + self.fn_entry.get() + ".survey"))
+        if not survey:
             showerror("Error", "Could not load the survey from given filename")
             return
-        survey = Survey.get_surveys()[0]
+        # Want to be able to load again if another program edits the survey file
         Survey.clear_surveys()
         # Get question from survey
         self.sq_entry.delete(0, END)
@@ -80,12 +96,17 @@ class EditorApp:
                 self.spinboxes[i].insert(0, str(current_response.count))
             else:
                 self.spinboxes[i].insert(0, "1")
+        # Tell the survey ID
+        showinfo("Notice", "Loaded survey with ID: {}".format(survey.id))
 
     def save(self):
         if not self.validate_filename():
             return
         # Fill in survey data and get survey
         survey_dict = {"question": self.sq_entry.get(), "responses": []}
+        if not self.sq_entry.get():
+            showerror("Error", "A survey question is required. Did not save.")
+            return
         prev_count = 100
         for i in range(8):
             try:
@@ -121,8 +142,10 @@ class EditorApp:
                               "Saving this will overwrite an existing file. Are you sure you want to continue?")
             if ret == "no":
                 return
-        survey.save_to_file(filepath)
-        showinfo("Notice", "Save successful")
+        if survey.save_to_file(filepath):
+            showinfo("Notice", "Successfully saved survey with ID: {}".format(survey.id))
+        else:
+            showerror("Error", "Could not save survey")
 
     def validate_filename(self):
         # Validate filename

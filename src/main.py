@@ -100,11 +100,12 @@ class State:
     FACE_OFF, \
     MAIN_GAME, \
     STEALING, \
+    SHOWING_ANSWERS, \
     TIEBREAKER, \
     FAST_MONEY, \
     CREDITS, \
     QUITTING \
-        = range(8)
+        = range(9)
 
     _state = LOGO
 
@@ -130,6 +131,31 @@ class State:
         return cls._state
 
 
+class State:
+    """
+    Represents the current state of the program
+    """
+    LOGO, \
+    FACE_OFF, \
+    MAIN_GAME, \
+    STEALING, \
+    SHOWING_ANSWERS, \
+    TIEBREAKER, \
+    FAST_MONEY, \
+    CREDITS, \
+    QUITTING \
+        = range(9)
+
+    def __init__(self):
+        self.mode = State.LOGO
+        self.num_strikes = 0
+        self.main_survey = None
+        self.main_team1_score = 0
+        self.main_team2_score = 0
+        self.main_
+        self.fm_surveys = [None, None, None, None, None]
+
+
 class Animation:
     """
     An animation that will occur over time.
@@ -141,7 +167,7 @@ class Animation:
     def __init__(self, callback: Callable[[int], bool]):
         """
         Sets up animation into default state and adds them to be tracked.
-        The callback should take number of ticks the animation has been run and return if the animation is done.
+        The callback should take number of ticks the animation has been run and return boolean of if the animation is done.
         The counter runs first with counter equal to 0.
 
         :param callback: function to call every tick
@@ -155,8 +181,14 @@ class Animation:
         Call the callback and removes animation if it is done.
         """
         if self._call(self.counter):
-            self._animations.remove(self)
+            self.remove()
         self.counter += 1
+
+    def remove(self):
+        """
+        Remove the callback from the animations list
+        """
+        self._animations.remove(self)
 
     @classmethod
     def tick(cls):
@@ -165,58 +197,6 @@ class Animation:
         """
         for animation in cls._animations:
             animation.call()
-
-
-class FontHelper:
-    """
-    Makes using fonts easier by allowing multiple sizes of the font.
-    """
-
-    def __init__(self, path):
-        """
-        Create a font helper with the font from the given path.
-        Invalid paths will raise OSError.
-
-        :param path: the path to the font
-        """
-        if not os.path.exists(path):
-            raise OSError("The given font path is not valid: {}".format(path))
-        self.path = path
-        self._font_objects = {}
-
-    def get(self, size):
-        """
-        Get a font object of the given size.
-        Caches font objects to reduce memory usage.
-
-        :param size: the size to get of the font
-
-        :return: the font object for the given size
-        """
-        if size not in self._font_objects.keys():
-            self._font_objects[size] = pygame.font.Font(self.path, size)
-        return self._font_objects[size]
-
-    def fits(self, text, max_font_size, rect_size):
-        """
-        Get a font object of the largest size at or below given max size that fits the given
-        text in the given rectangular size.
-
-        :param text: the text to fit
-        :param max_font_size: the maximum font size
-        :param rect_size: the size to fit the text in (can be Rect or list/tuple)
-
-        :return: the largest possible font object for the text size or else None
-        """
-        if isinstance(rect_size, pygame.Rect):
-            rect_size = rect_size.size
-        for font_size in range(max_font_size, 1, -1):
-            text_size = self.get(font_size).size(text)
-            if rect_size[1] < text_size[1]:
-                continue
-            if rect_size[0] < text_size[0]:
-                continue
-            return self.get(font_size)
 
 
 def wrong_answer():
@@ -301,52 +281,54 @@ def setup_strike_locs():
             strike_locs[num_strikes][i][1] = strike_y
 
 
-# Set up pygame
-pygame.init()
-clock = pygame.time.Clock()
-monitor_info = pygame.display.Info()
-pygame.display.set_caption("The Feud")
-screen = pygame.display.set_mode((monitor_info.current_w, monitor_info.current_h),
-                                 pygame.RESIZABLE | pygame.NOFRAME)  # , pygame.FULLSCREEN)
+if __name__ == '__main__':
+    # Set up pygame
+    pygame.init()
+    clock = pygame.time.Clock()
+    monitor_info = pygame.display.Info()
+    pygame.display.set_caption("The Feud")
+    screen = pygame.display.set_mode((monitor_info.current_w, monitor_info.current_h),
+                                     pygame.RESIZABLE | pygame.NOFRAME)  # , pygame.FULLSCREEN)
 
-# Load resources
-asset_dir = "assets/"
-image_dir = asset_dir + "images/"
-sound_dir = asset_dir + "sounds/"
+    # Load resources
+    asset_dir = "assets/"
+    image_dir = asset_dir + "images/"
+    sound_dir = asset_dir + "sounds/"
 
-font = FontHelper(os.path.abspath(asset_dir + "MuktaMahee-Regular.ttf"))
+    font = FontHelper(os.path.abspath(asset_dir + "MuktaMahee-Regular.ttf"))
 
-main_scoreboard = pygame.image.load(image_dir + "main_board.png")
-fast_money_scoreboard = pygame.image.load(image_dir + "fast_money_board.png")
-logo_screen = pygame.image.load(image_dir + "logo_screen.png")
-logo_screen_left = pygame.image.load(image_dir + "logo_screen_left.png")
-logo_screen_right = pygame.image.load(image_dir + "logo_screen_right.png")
-strike_image = pygame.image.load(image_dir + "strike.png")
-credits_screen = pygame.image.load("")
+    main_scoreboard = pygame.image.load(image_dir + "main_board.png")
+    fast_money_scoreboard = pygame.image.load(image_dir + "fast_money_board.png")
+    logo_screen = pygame.image.load(image_dir + "logo_screen.png")
+    logo_screen_left = pygame.image.load(image_dir + "logo_screen_left.png")
+    logo_screen_right = pygame.image.load(image_dir + "logo_screen_right.png")
+    strike_image = pygame.image.load(image_dir + "strike.png")
+    credits_screen = pygame.image.load("")
 
-answer_sound = pygame.mixer.Sound(sound_dir + "bell.wav")
-strike_sound = pygame.mixer.Sound(sound_dir + "strike.wav")
-try_again_sound = pygame.mixer.Sound(sound_dir + "try_again.wav")
+    answer_sound = pygame.mixer.Sound(sound_dir + "bell.wav")
+    strike_sound = pygame.mixer.Sound(sound_dir + "strike.wav")
+    try_again_sound = pygame.mixer.Sound(sound_dir + "try_again.wav")
 
-# Set up game variables
-strikes = 0
-responses = pygame.sprite.Group()
-# TODO: Attach up responses group to be drawn / reorganize this section
-displays = pygame.sprite.Group()
-# TODO: Make all these locations relative
-main_score = NumberDisplay("Main Display Score", (440, 22), displays)
-left_score = NumberDisplay("Left Team Score", (2, 328), displays)
-right_score = NumberDisplay("Right Team Score", (885, 335), displays)
+    # Set up game variables
+    strikes = 0
+    responses = pygame.sprite.Group()
+    # TODO: Attach up responses group to be drawn / reorganize this section
+    displays = pygame.sprite.Group()
+    # TODO: Make all these locations relative
+    main_score = NumberDisplay("Main Display Score", (440, 22), displays)
+    left_score = NumberDisplay("Left Team Score", (2, 328), displays)
+    right_score = NumberDisplay("Right Team Score", (885, 335), displays)
 
-# Set up strike locations
-strike_spacing = 0
-strike_locs = []
-setup_strike_locs()
+    # Set up strike locations
+    strike_spacing = 0
+    strike_locs = []
+    setup_strike_locs()
 
-# Set up tkinter and start looping
-root = Tk()
-root.after(0, loop)
-root.mainloop()
+    # Set up tkinter and start looping
+    master = Tk()
+    ControlApp(master)
+    master.after(0, loop)
+    master.mainloop()
 
-# Once tkinter stops close pygame
-pygame.quit()
+    # Once tkinter stops close pygame
+    pygame.quit()

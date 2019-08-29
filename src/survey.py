@@ -8,7 +8,6 @@ class Survey:
     """
 
     _surveys = []
-    current_survey = None
 
     def __init__(self, data):
         """
@@ -22,13 +21,6 @@ class Survey:
         responses = data.get("responses", [])
         for i in range(len(responses)):
             self.responses.append(Response(self, responses[i]["response"], responses[i]["count"], i + 1))
-        print(survey for survey in self._surveys if survey == self)
-        # TODO: Make sure this works as intended
-        # Not sure which will work. Maybe both will. Make sure to figure this out before thinking there is a bug
-        if self not in self._surveys:
-            self._surveys.append(self)
-        # if not (survey for survey in self._surveys if survey == self):
-        #     self._surveys.append(self)
 
     @property
     def num_responses(self):
@@ -74,11 +66,11 @@ class Survey:
     @classmethod
     def get_surveys(cls):
         """
-        Get the survey list
+        Get a copy of the survey list
 
-        :return: the survey list
+        :return: a copy of the survey list
         """
-        return cls._surveys
+        return cls._surveys.copy()
 
     @classmethod
     def clear_surveys(cls):
@@ -86,7 +78,6 @@ class Survey:
         Clear all the loaded surveys.
         """
         cls._surveys.clear()
-        cls.current_survey = None
 
     @classmethod
     def load_all(cls):
@@ -104,23 +95,25 @@ class Survey:
         cls.clear_surveys()
         cls.load_all()
 
-    @staticmethod
-    def load_survey_file(path):
+    @classmethod
+    def load_survey_file(cls, path):
         """
-        Load survey from given path to survey file
+        Load survey from given path to survey file and add it to survey list if not already loaded
 
         :param path: path to the file to be loaded
 
-        :return: boolean success of loading
+        :return: survey or none if unsuccessful
         """
         try:
             file = open(path)
-            Survey(json.load(file))
+            s = Survey(json.load(file))
             file.close()
-            return True
+            if s not in cls._surveys:
+                cls._surveys.append(s)
+            return s
         except OSError:
             print("File (" + path + ") could not be opened")
-        return False
+        return None
 
 
 class Response:
@@ -142,3 +135,18 @@ class Response:
         self.phrase = phrase
         self.count = count
         self.rank = rank
+
+    def __eq__(self, other):
+        """
+        Equals comparison for response
+        Checks each of the four fields
+
+        :param other: the other object to compare to
+
+        :return: boolean equality
+        """
+
+        if not isinstance(other, Response):
+            return False
+        return self.survey == other.survey and self.phrase == other.phrase and self.count == other.count and \
+               self.rank == other.rank
