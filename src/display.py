@@ -404,28 +404,33 @@ class StrikeDisplay(AnimatedSprite):
         loc.y = (rect.height / 2) - strike_rect.centery
 
         # No strikes
-        self.strike_images.append(pygame.Surface(rect.size))
+        self.strike_images.append(pygame.Surface(rect.size).convert_alpha())
+        self.strike_images[0].fill(BLANK)
 
         # One strike
-        self.strike_images.append(pygame.Surface(rect.size))
+        self.strike_images.append(pygame.Surface(rect.size).convert_alpha())
+        self.strike_images[1].fill(BLANK)
         loc.x = (rect.width / 2) - strike_rect.centerx
         self.strike_images[1].blit(strike_image, tuple(loc))
 
         # Two strikes
-        self.strike_images.append(pygame.Surface(rect.size))
+        self.strike_images.append(pygame.Surface(rect.size).convert_alpha())
+        self.strike_images[2].fill(BLANK)
         loc.x = (rect.width / 3) - strike_rect.centerx
         self.strike_images[2].blit(strike_image, tuple(loc))
         loc.x = (2 * rect.width / 3) - strike_rect.centerx
         self.strike_images[2].blit(strike_image, tuple(loc))
 
         # Three strikes
-        self.strike_images.append(pygame.Surface(rect.size))
+        self.strike_images.append(pygame.Surface(rect.size).convert_alpha())
+        self.strike_images[3].fill(BLANK)
         loc.x = 0
         self.strike_images[3].blit(strike_image, tuple(loc))
         loc.x = (rect.width / 2) - strike_rect.centerx
         self.strike_images[3].blit(strike_image, tuple(loc))
         loc.x = rect.width - strike_rect.width
         self.strike_images[3].blit(strike_image, tuple(loc))
+        self.render()
 
     def show_strikes(self, num_strikes):
         self.start_animation(num_strikes)
@@ -456,7 +461,7 @@ class TimerLabel(TextLabel, AnimatedSprite):
 
     @time.setter
     def time(self, seconds):
-        self.text = str(seconds)
+        self._text = str(seconds)
 
     def start_countdown(self):
         self.start_animation()
@@ -465,6 +470,7 @@ class TimerLabel(TextLabel, AnimatedSprite):
         self.end_animation()
 
     def tick(self):
+        # Note: in this I use self.time NOT self._time
         # If counter is 0 then stop
         if not self.time:
             self.stop_countdown()

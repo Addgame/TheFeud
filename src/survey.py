@@ -1,4 +1,5 @@
 import json
+import os
 import pathlib
 
 
@@ -7,7 +8,9 @@ class Survey:
     Represents survey data from .survey data files
     """
 
-    _surveys = []
+    BLANK = None
+
+    _surveys = {}
 
     def __init__(self, data):
         """
@@ -108,8 +111,8 @@ class Survey:
             file = open(path)
             s = Survey(json.load(file))
             file.close()
-            if s not in cls._surveys:
-                cls._surveys.append(s)
+            if s not in cls._surveys.values():
+                cls._surveys[os.path.basename(path).rsplit(".")[0]] = s
             return s
         except OSError:
             print("File (" + path + ") could not be opened")
@@ -150,3 +153,7 @@ class Response:
             return False
         return self.survey == other.survey and self.phrase == other.phrase and self.count == other.count and \
                self.rank == other.rank
+
+
+if not Survey.BLANK:
+    Survey.BLANK = Survey({"id": "X", "question": "<No Survey Loaded>"})

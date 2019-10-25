@@ -5,6 +5,7 @@ from tkinter.messagebox import askquestion, showerror, showinfo
 from survey import Survey
 
 
+# TODO: make sure surveys folder exists
 class EditorApp:
     BG_COLOR = "#d9d9d9"
     BUTTON_COLOR = "#dfdfdf"
