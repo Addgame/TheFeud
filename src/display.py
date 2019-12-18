@@ -35,7 +35,7 @@ class TextLabel(pygame.sprite.Sprite):
 
     def render(self):
         self.image.fill(BLANK)
-        font = self.font_helper.fits_default(self._text, 72, self.rect)
+        font = self.font_helper.fits_default(self._text, 90, self.rect)
         text_image = font.render(self._text, True, SILVER)
         text_rect = text_image.get_rect()
         text_rect.x = self.rect.width / 2 - text_rect.centerx
@@ -241,7 +241,8 @@ class MainResponseCard(ResponseCard):
         self.rect = full_rect
         self.hidden_image = hidden_image
         self.revealed_bg_image = revealed_bg_image
-        self.blank_image = pygame.Surface(full_rect.size)
+        self.blank_image = pygame.Surface(full_rect.size).convert_alpha()
+        self.blank_image.fill(BLANK)
         self.text_rect = text_rect
         self.num_rect = num_rect
         self.update_images()
@@ -260,7 +261,7 @@ class MainResponseCard(ResponseCard):
         self.render()
 
     def update_images(self):
-        self.revealed_image = self.revealed_bg_image
+        self.revealed_image = self.revealed_bg_image.copy()
         if not self.response:
             self.render()
             return
@@ -288,7 +289,7 @@ class MainResponseCard(ResponseCard):
         else:
             self.image = pygame.Surface(self.rect.size)
             self.image.blit(self.revealed_image, (0, 0))
-            hidden_y = int(self.rect.height * (self.animation_counter / (1 * TICKS_PER_SEC)))
+            hidden_y = int(self.rect.height * (self.animation_counter / (.2 * TICKS_PER_SEC)))
             self.image.blit(self.hidden_image, (0, hidden_y))
 
 
@@ -317,7 +318,9 @@ class FastMoneyResponseCard(ResponseCard):
         self.text_rect = text_rect
         self.num_rect = num_rect
         self.red_block_image = red_block_image
-        self.blank_image = pygame.Surface(self.rect.size)
+        self.red_block_width = red_block_image.get_rect().width
+        self.blank_image = pygame.Surface(self.rect.size).convert_alpha()
+        self.blank_image.fill(BLANK)
         self.update_images()
 
     @property
@@ -343,14 +346,15 @@ class FastMoneyResponseCard(ResponseCard):
         self.render()
 
     def update_images(self):
-        self.revealed_image = pygame.Surface(self.rect.size)
+        self.revealed_image = pygame.Surface(self.rect.size).convert_alpha()
+        self.revealed_image.fill(BLANK)
         if not self.response:
             self.render()
             return
         font = self.font_helper.fits_default(self.given_response, 72, self.text_rect)
         text_image = font.render(self.given_response, True, SILVER)
         rendered_rect = text_image.get_rect()
-        rendered_rect.x = self.text_rect.centerx - rendered_rect.centerx
+        rendered_rect.x = self.text_rect.x + 5  # self.text_rect.centerx - rendered_rect.centerx
         rendered_rect.y = self.text_rect.centery - rendered_rect.centery
         self.revealed_image.blit(text_image, rendered_rect)
         font = self.font_helper.fits_default(str(self.response.count), 72, self.num_rect)
@@ -372,13 +376,14 @@ class FastMoneyResponseCard(ResponseCard):
         elif self.reveal_stage == self.COUNT_REVEALED:
             self.image = self.revealed_image
         elif self.reveal_stage == self.PHRASE_REVEALED:
-            self.image = pygame.Surface(self.rect.size)
+            self.image = pygame.Surface(self.rect.size).convert_alpha()
+            self.image.fill(BLANK)
             temp_width = self.text_rect.width * min(1.0, self.animation_counter / (2 * TICKS_PER_SEC))
             temp_rect = pygame.Rect(0, 0, temp_width, self.rect.height)
             self.image.blit(self.revealed_image, (0, 0), temp_rect)
             if self.animation_counter < 2 * TICKS_PER_SEC:
                 # revealing phrase
-                temp_rect.x = temp_rect.width
+                temp_rect.x = min(temp_rect.width, self.text_rect.width - self.red_block_width)
                 self.image.blit(self.red_block_image, temp_rect)
             elif self.animation_counter < 3 * TICKS_PER_SEC:
                 # flashing red box over count
@@ -461,7 +466,7 @@ class TimerLabel(TextLabel, AnimatedSprite):
 
     @time.setter
     def time(self, seconds):
-        self._text = str(seconds)
+        self.text = str(seconds)
 
     def start_countdown(self):
         self.start_animation()
@@ -525,7 +530,9 @@ class FontHelper:
         """
         if isinstance(rect_size, pygame.Rect):
             rect_size = rect_size.size
-        for font_size in range(max_font_size, 1, -1):
+        # TODO: Make the step size customizable since don't always need to check size? or maybe just do the binary search
+        for i in range(max_font_size, 1, -5):
+            font_size = max(1, i)
             text_size = self._get_no_cache(font_size).size(text)
             if rect_size[1] < text_size[1]:
                 continue
@@ -548,6 +555,7 @@ class FontHelper:
         return self.fits(text, max_font_size, rect_size) or self.get(default_size)
 
 
+# TODO: make all the objects only fully set self.image at end of updating image (due to multithreading)
 class GraphicsManager:
     instance = None
 
@@ -570,7 +578,7 @@ class GraphicsManager:
     MAIN_STRIKE_BOX = pygame.Rect(410, 390, 1100, 300)
 
     FM_CARDS_TOPLEFT = pygame.Rect(169, 104, 773, 112)
-    FM_CARDS_DELTA = Vector2(807, 147)  # 976 - 169, 251 - 104
+    FM_CARDS_DELTA = Vector2(807, 150)  # 976 - 169, 251 - 104 (+3?)
     FM_CARDS_TEXT_IN_CARD = pygame.Rect(0, 0, 634, 112)
     FM_CARDS_NUMBER_IN_CARD = pygame.Rect(661, 0, 112, 112)
     FM_TIMER_RECT = pygame.Rect(806, 881, 180, 150)
@@ -619,8 +627,8 @@ class GraphicsManager:
         self.id_display = IDLabel(self.font_helper)
         self.logo_split = LogoSplit()
         self.strikes = StrikeDisplay()
-        self.team_1_name = TextBox(self.font_helper)
-        self.team_2_name = TextBox(self.font_helper)
+        # self.team_1_name = TextBox(self.font_helper)
+        # self.team_2_name = TextBox(self.font_helper)
         self.master_score = TextLabel(self.font_helper)
         self.team_1_score = TextLabel(self.font_helper)
         self.team_2_score = TextLabel(self.font_helper)
@@ -636,9 +644,9 @@ class GraphicsManager:
         self.state_groups[0].add(self.logo_split)
         self.state_groups[0].add(self.id_display)
         # Main Game
-        self.state_groups[1].add(self.team_1_name)
+        # self.state_groups[1].add(self.team_1_name)
         self.state_groups[1].add(self.team_1_score)
-        self.state_groups[1].add(self.team_2_name)
+        # self.state_groups[1].add(self.team_2_name)
         self.state_groups[1].add(self.team_2_score)
         self.state_groups[1].add(self.master_score)
         self.state_groups[1].add(*self.main_cards)
@@ -713,8 +721,9 @@ class GraphicsManager:
         self.logo_split.set_display(tuple(resolution), self.scale_image(self.raw_logo_left),
                                     self.scale_image(self.raw_logo_right))
         self.strikes.set_display(self.scale_rect(self.MAIN_STRIKE_BOX), self.scale_image(self.raw_strike))
-        self.team_1_name.set_rect(self.scale_rect(self.TEAM_1_NAME_RECT))
-        self.team_2_name.set_rect(self.scale_rect(self.TEAM_2_NAME_RECT))
+        # TODO: make names a thing?
+        # self.team_1_name.set_rect(self.scale_rect(self.TEAM_1_NAME_RECT))
+        # self.team_2_name.set_rect(self.scale_rect(self.TEAM_2_NAME_RECT))
         self.master_score.set_rect(self.scale_rect(self.MASTER_SCORE_RECT))
         self.team_1_score.set_rect(self.scale_rect(self.TEAM_1_SCORE_RECT))
         self.team_2_score.set_rect(self.scale_rect(self.TEAM_2_SCORE_RECT))
