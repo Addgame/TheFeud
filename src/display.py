@@ -252,13 +252,13 @@ class MainResponseCard(ResponseCard):
             if not self.response:
                 return
             self.revealed_image = self.revealed_bg_image.copy()
-            font = self.font_helper.fits_default(self.response.phrase, 72, self.text_rect)
+            font = self.font_helper.fits_default(self.response.phrase, self.font_guess, self.text_rect)
             text_image = font.render(self.response.phrase, False, SILVER)
             rendered_rect = text_image.get_rect()
             rendered_rect.x = self.text_rect.centerx - rendered_rect.centerx
             rendered_rect.y = self.text_rect.centery - rendered_rect.centery
             self.revealed_image.blit(text_image, rendered_rect)
-            font = self.font_helper.fits_default(str(self.response.count), 72, self.num_rect)
+            font = self.font_helper.fits_default(str(self.response.count), self.font_guess, self.num_rect)
             num_image = font.render(str(self.response.count), False, SILVER)
             rendered_rect = num_image.get_rect()
             rendered_rect.x = self.num_rect.centerx - rendered_rect.centerx
