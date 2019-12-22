@@ -19,9 +19,11 @@ class TextLabel(pygame.sprite.Sprite):
         self.rect = None
         self.image = None
         self.font_helper = font_helper
+        self.font_guess = 90
 
     def set_display(self, rect):
         self.rect = rect
+        self.font_guess = self.font_helper.fits_height(rect.height, self.font_guess)
         self.image = pygame.Surface(rect.size).convert()
         self.image.set_colorkey(MAGENTA)
         self.render()
@@ -38,7 +40,7 @@ class TextLabel(pygame.sprite.Sprite):
     def render(self):
         with GraphicsManager.instance.lock:
             self.image.fill(MAGENTA)
-            font = self.font_helper.fits_default(self._text, 90, self.rect)
+            font = self.font_helper.fits_default(self._text, self.font_guess, self.rect)
             text_image = font.render(self._text, False, SILVER)
             text_rect = text_image.get_rect()
             text_rect.x = self.rect.width / 2 - text_rect.centerx
@@ -53,7 +55,7 @@ class IDLabel(TextLabel):
 
     def render(self):
         self.image.fill(MAGENTA)
-        font = self.font_helper.fits_default(self._text, 72, self.rect)
+        font = self.font_helper.fits_default(self._text, self.font_guess, self.rect)
         text_image = font.render(self._text, False, SILVER)
         text_rect = text_image.get_rect()
         text_rect.x = self.rect.width - text_rect.width
@@ -218,10 +220,12 @@ class MainResponseCard(ResponseCard):
         self.text_rect = None
         self.num_rect = None
         self.font_helper = font_helper
+        self.font_guess = 72
 
     def set_display(self, full_rect, text_rect, num_rect, hidden_image, revealed_bg_image):
         self.rect = full_rect
         self.text_rect = text_rect
+        self.font_guess = self.font_helper.fits_height(text_rect.height, self.font_guess)
         self.num_rect = num_rect
         self.image = pygame.Surface(full_rect.size).convert()
         self.image.set_colorkey(MAGENTA)
@@ -291,12 +295,14 @@ class FastMoneyResponseCard(ResponseCard):
         self.red_block_width = 0
         self.revealed_image = None
         self.font_helper = font_helper
+        self.font_guess = 72
 
     def set_display(self, full_rect, text_rect, num_rect, red_block_image):
         self.rect = full_rect
         self.image = pygame.Surface(full_rect.size).convert()
         self.image.set_colorkey(MAGENTA)
         self.text_rect = text_rect
+        self.font_guess = self.font_helper.fits_height(text_rect.height, self.font_guess)
         self.num_rect = num_rect
         self.red_block_image = red_block_image
         self.red_block_width = red_block_image.get_rect().width
@@ -331,13 +337,13 @@ class FastMoneyResponseCard(ResponseCard):
             if not self.response:
                 self.render()
                 return
-            font = self.font_helper.fits_default(self.given_response, 72, self.text_rect)
+            font = self.font_helper.fits_default(self.given_response, self.font_guess, self.text_rect)
             text_image = font.render(self.given_response, False, SILVER)
             rendered_rect = text_image.get_rect()
             rendered_rect.x = self.text_rect.x + 5  # self.text_rect.centerx - rendered_rect.centerx
             rendered_rect.y = self.text_rect.centery - rendered_rect.centery
             self.revealed_image.blit(text_image, rendered_rect)
-            font = self.font_helper.fits_default(str(self.response.count), 72, self.num_rect)
+            font = self.font_helper.fits_default(str(self.response.count), self.font_guess, self.num_rect)
             num_image = font.render(str(self.response.count), False, SILVER)
             rendered_rect = num_image.get_rect()
             rendered_rect.x = self.num_rect.centerx - rendered_rect.centerx
@@ -434,7 +440,7 @@ class StrikeDisplay(AnimatedSprite):
         self.image = self.strike_images[self.current_animation or 0]
 
 
-class TimerLabel(TextLabel, AnimatedSprite):
+class TimerLabel(TextLabel):
     """
     Fast money timer label
     """
@@ -457,15 +463,6 @@ class TimerLabel(TextLabel, AnimatedSprite):
 
     def stop_countdown(self):
         self.end_animation()
-
-    def tick(self):
-        # Note: in this I use self.time NOT self._time
-        # If counter is 0 then stop
-        if not self.time:
-            self.stop_countdown()
-        # Every second, increase the count
-        if not self.animation_counter % TICKS_PER_SEC:
-            self.time -= 1
 
 
 class FontHelper:
@@ -502,7 +499,7 @@ class FontHelper:
         return pygame.font.Font(self.path, size)
 
     def fits(self, text, max_font_size, rect_size):
-        """ TODO: Maybe make this a binary search instead of linear
+        """
         Get a font object of the largest size at or below given max size that fits the given
         text in the given rectangular size.
 
@@ -514,7 +511,6 @@ class FontHelper:
         """
         if isinstance(rect_size, pygame.Rect):
             rect_size = rect_size.size
-        # TODO: Make the step size customizable since don't always need to check size? or maybe just do the binary search
         for i in range(max_font_size, 1, -5):
             font_size = max(1, i)
             text_size = self._get_no_cache(font_size).size(text)
@@ -538,9 +534,45 @@ class FontHelper:
         """
         return self.fits(text, max_font_size, rect_size) or self.get(default_size)
 
+    def fits_height(self, height, guess):
+        """
+        Determines the largest size of the font to fit in the given height
+        The better the guess, the quicker the font size can be determined
 
-# TODO: make all the objects only fully set self.image at end of updating image (due to multithreading) or use lock
-# TODO: asset directory relative
+        :param height: the height that the text needs to fit in
+        :param guess: a guess of the font size
+
+        :return: a font size that will fit within the given height or 1 if too small
+        """
+        # True means last was oversized, False means last was undersized - init arbitrary
+        last_sized = True
+        # First iteration tracker
+        first = True
+        while True:
+            current_height = self._get_no_cache(guess).size("AEIOU")[1]
+            # current_height = self._get_no_cache(guess).get_height()
+            if current_height == height:
+                return guess
+            if current_height > height:
+                guess -= 5
+                if first:
+                    last_sized = True
+                    first = False
+                    if guess < 1:
+                        return 1
+                else:
+                    if not last_sized:
+                        return guess
+            else:
+                guess += 5
+                if first:
+                    last_sized = False
+                    first = False
+                else:
+                    if last_sized:
+                        return guess
+
+
 class GraphicsManager:
     instance = None
 
