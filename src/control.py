@@ -8,9 +8,9 @@ from tkinter.messagebox import askquestion
 
 import pygame
 
-from constants import GameState
-from display import GraphicsManager
-from survey import Survey, Response
+from src.constants import GameState, ASSET_DIR
+from src.display import GraphicsManager
+from src.survey import Survey, Response
 
 
 class ControlApp:
@@ -25,7 +25,7 @@ class ControlApp:
         # Main Window
         root.geometry("800x800")
         root.title("The Feud Game Control")
-        root.iconphoto(True, PhotoImage(file=path.realpath(r"..\assets\images\icon.png")))
+        root.iconphoto(True, PhotoImage(file=path.realpath(ASSET_DIR + r"images\icon.png")))
         root.configure(background=self.BG_COLOR)
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         for i in range(12):
@@ -39,7 +39,7 @@ class ControlApp:
         self.display_manager.team_2_score.text = "0"
 
         # Mode Selection (the game state)
-        self.mode = GameState.LOGO
+        self.mode = GameState.PREPARING
         mode_frame = LabelFrame(root, text="Mode", bg=self.BG_COLOR, width=100, height=100)
         self.mode_var = IntVar(value=0)
         self.mode_var.trace_add("write", self.mode_change)
@@ -76,10 +76,10 @@ class ControlApp:
 
         # Main Game Preparing
         self.main_preparing_frame = Frame(self.preparing_frame, bg=self.BG_COLOR)
-        self.main_current_survey_prep_widget = LargeSurveyWidget(self.main_preparing_frame, Survey.BLANK,
+        self.main_current_survey_prep_widget = LargeSurveyWidget(self.main_preparing_frame, Survey.NONE,
                                                                  text="Current Survey")
         self.main_current_survey_prep_widget.grid(row=0, column=0, rowspan=2, padx=4, pady=2)
-        self.main_survey_preview_widget = LargeSurveyWidget(self.main_preparing_frame, Survey.BLANK,
+        self.main_survey_preview_widget = LargeSurveyWidget(self.main_preparing_frame, Survey.NONE,
                                                             text="Survey Preview")
         self.main_survey_preview_widget.grid(row=0, column=1, rowspan=2, padx=4, pady=2)
         self.main_survey_list = SurveyList(self.main_preparing_frame, self.preview_select)
@@ -91,7 +91,7 @@ class ControlApp:
 
         # Fast Money Preparing
         self.fm_preparing_frame = Frame(self.preparing_frame, bg=self.BG_COLOR)
-        self.fm_survey_preview = LargeSurveyWidget(self.fm_preparing_frame, Survey.BLANK, text="Survey Preview")
+        self.fm_survey_preview = LargeSurveyWidget(self.fm_preparing_frame, Survey.NONE, text="Survey Preview")
         self.fm_survey_preview.grid(row=0, column=0)
         self.fm_survey_list = SurveyList(self.fm_preparing_frame, self.preview_select)
         self.fm_survey_list.grid(row=0, column=1)
@@ -109,7 +109,7 @@ class ControlApp:
         self.fm_survey_widgets = []
         for i in range(5):
             self.fm_survey_widgets.append(
-                SmallSurveyWidget(self.fm_preparing_frame, Survey.BLANK, text="Survey " + str(i + 1)))
+                SmallSurveyWidget(self.fm_preparing_frame, Survey.NONE, text="Survey " + str(i + 1)))
             self.fm_survey_widgets[i].grid(row=1 + 2 * int(i / 3), column=i % 3)
             Button(self.fm_preparing_frame, text="Set From Preview", bg=self.BUTTON_COLOR,
                    command=lambda num=i: self.set_from_selected(num)).grid(
@@ -121,7 +121,7 @@ class ControlApp:
         # Main Game
         self.active_team = IntVar(value=1)
         self.main_game_frame = Frame(root, bg=self.BG_COLOR)
-        self.main_survey_game_widget = SmallSurveyWidget(self.main_game_frame, Survey.BLANK, text="Survey")
+        self.main_survey_game_widget = SmallSurveyWidget(self.main_game_frame, Survey.NONE, text="Survey")
         self.main_survey_game_widget.grid(row=0, column=0)
 
         scoring_frame = LabelFrame(self.main_game_frame, text="Scoring", bg=self.BG_COLOR)
@@ -169,7 +169,7 @@ class ControlApp:
             Radiobutton(round_frame, text="Round " + str(i + 1), bg=self.BUTTON_COLOR, indicator=0, value=i + 1,
                         variable=self.round_number).grid(row=0, column=i)
 
-        self.main_responses_list = MainSurveyResponsesWidget(self.main_game_frame, Survey.BLANK,
+        self.main_responses_list = MainSurveyResponsesWidget(self.main_game_frame, Survey.NONE,
                                                              self.set_main_response_visibility, text="Responses")
         self.main_responses_list.grid(row=2, column=0, columnspan=2)
 
@@ -184,7 +184,7 @@ class ControlApp:
         self.fm_player_responses = FastMoneyPlayerResponsesWidget(self.fast_money_frame, self.selected_fm_response_var,
                                                                   self.toggle_fm_response, self.toggle_fm_count)
         self.fm_player_responses.grid(row=0, column=0, columnspan=3)
-        self.fm_selected_survey_widget = SmallSurveyWidget(self.fast_money_frame, Survey.BLANK,
+        self.fm_selected_survey_widget = SmallSurveyWidget(self.fast_money_frame, Survey.NONE,
                                                            text="Survey of Selected")
         self.fm_selected_survey_widget.grid(row=1, column=0)
         # TODO: reorder timer to have time based in control app so ending can be checked
@@ -205,7 +205,7 @@ class ControlApp:
         Radiobutton(visibility_frame, text="Hide", bg=self.BUTTON_COLOR, indicator=0, variable=self.visibility_var,
                     value=0).grid(row=0, column=1)
         visibility_frame.grid(row=3, column=0)
-        self.fm_responses_link = FastMoneySurveyResponsesWidget(self.fast_money_frame, Survey.BLANK,
+        self.fm_responses_link = FastMoneySurveyResponsesWidget(self.fast_money_frame, Survey.NONE,
                                                                 self.link_to_selected)
         self.fm_responses_link.grid(row=1, column=1, rowspan=2)
 
@@ -226,7 +226,7 @@ class ControlApp:
             self.fm_survey_preview.survey = self.fm_survey_list.selected
 
     def set_current(self):
-        if self.main_current_survey_prep_widget.survey == Survey.BLANK:
+        if self.main_current_survey_prep_widget.survey == Survey.NONE:
             for i in range(1, 6):
                 self.mode_buttons[i].configure(state=NORMAL)
         self.main_current_survey_prep_widget.survey = self.main_survey_preview_widget.survey
@@ -237,7 +237,7 @@ class ControlApp:
         self.fm_survey_widgets[survey_num].survey = self.fm_survey_preview.survey
         if self.mode_buttons[GameState.FAST_MONEY.value]["state"] == "disabled":
             for i in range(5):
-                if self.fm_survey_widgets[i].survey == Survey.BLANK:
+                if self.fm_survey_widgets[i].survey == Survey.NONE:
                     break
             else:
                 self.mode_buttons[GameState.FAST_MONEY.value].configure(state=NORMAL)
@@ -326,16 +326,16 @@ class ControlApp:
         # Don't do anything if we aren't actually changing state
         if current_state == new_state:
             return
-        if current_state == GameState.LOGO:
+        if current_state == GameState.PREPARING:
             self.set_display_ids()
             # TODO: This isn't in the right place
             self.preparing_frame.grid_forget()
-        if new_state == GameState.LOGO:
+        if new_state == GameState.PREPARING:
             self.display_manager.logo_split.close()
             # TODO: This isn't in the right place
             self.preparing_frame.grid(row=1, column=0, columnspan=12)
         if 1 <= new_state.value <= 5:
-            if current_state == GameState.LOGO:
+            if current_state == GameState.PREPARING:
                 # self.display_manager.team_1_name.text = self.name_1_entry.get()
                 # self.display_manager.team_2_name.text = self.name_2_entry.get()
                 new_survey = self.main_current_survey_prep_widget.survey
@@ -360,7 +360,7 @@ class ControlApp:
         else:
             self.fast_money_frame.grid_forget()
         # Needs to happen here so that the screen behind it is ready
-        if current_state == GameState.LOGO:
+        if current_state == GameState.PREPARING:
             self.display_manager.logo_split.open()
         # Last thing is set new state to current
         self.mode = new_state
@@ -437,7 +437,7 @@ class ControlApp:
         if show:
             # TODO: do this better
             if not card.response:
-                card.response = Response(Survey.BLANK, "<Empty>", 0, 0)
+                card.response = Response(Survey.NONE, "<Empty>", 0, 0)
             card.given_response = value
             card.reveal_phrase()
         else:
@@ -448,7 +448,7 @@ class ControlApp:
         card = self.display_manager.fm_cards[index]
         if show:
             if not card.response:
-                card.response = Response(Survey.BLANK, "<Empty>", count, 0)
+                card.response = Response(Survey.NONE, "<Empty>", count, 0)
             else:
                 card.response.count = count
             card.update_images()
@@ -728,11 +728,11 @@ class SurveyList(Frame):
         self.select_cb = select_cb
         Button(self, text="Reload", command=self.reload, bg=ControlApp.BUTTON_COLOR).grid(row=2, column=0,
                                                                                           sticky=N + S + E + W)
-        self.selected = Survey.BLANK
+        self.selected = Survey.NONE
 
     def clicked(self, *args):
         # Need the 'or 0' for some reason
-        self.selected = Survey.get_surveys().get(self.listbox.get(self.listbox.curselection() or 0), Survey.BLANK)
+        self.selected = Survey.get_surveys().get(self.listbox.get(self.listbox.curselection() or 0), Survey.NONE)
         self.select_cb()
 
     def reload(self):

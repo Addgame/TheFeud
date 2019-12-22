@@ -1,8 +1,10 @@
 from enum import Enum
 
+from pygame import Color
+
 
 class GameState(Enum):
-    LOGO, \
+    PREPARING, \
     FACE_OFF, \
     MAIN_GAME, \
     STEALING, \
@@ -16,12 +18,16 @@ class GameState(Enum):
         return self.name.replace("_", " ").title()
 
 
+# Assets
+ASSET_DIR = r"assets\\"
+
 # Timing
 TICKS_PER_SEC = 20
 
 # Colors
-BLANK = (0, 0, 0, 0)
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-SILVER = (192, 192, 192)
-LIGHT_GRAY = (208, 208, 208)
+BLANK = Color(0, 0, 0, 0)
+BLACK = Color("black")
+WHITE = Color("white")
+SILVER = Color(192, 192, 192)
+LIGHT_GRAY = Color(208, 208, 208)
+MAGENTA = Color("magenta")

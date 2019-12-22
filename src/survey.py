@@ -2,13 +2,15 @@ import json
 import os
 import pathlib
 
+SURVEY_DIR = r"surveys\\"
+
 
 class Survey:
     """
     Represents survey data from .survey data files
     """
 
-    BLANK = None
+    NONE = None
 
     _surveys = {}
 
@@ -87,7 +89,7 @@ class Survey:
         """
         Load all survey files in the surveys folder.
         """
-        for path in pathlib.Path("../surveys").glob("*.survey"):
+        for path in pathlib.Path(SURVEY_DIR).glob("*.survey"):
             Survey.load_survey_file(str(path.resolve()))
 
     @classmethod
@@ -125,6 +127,8 @@ class Response:
     Acts as a data structure for response info.
     """
 
+    NONE = None
+
     def __init__(self, survey: Survey, phrase: str, count: int, rank: int):
         """
         Set up the data for the response.
@@ -155,5 +159,8 @@ class Response:
                self.rank == other.rank
 
 
-if not Survey.BLANK:
-    Survey.BLANK = Survey({"id": "X", "question": "<No Survey Loaded>"})
+if not Survey.NONE:
+    Survey.NONE = Survey({"id": "X", "question": "<No Survey Loaded>"})
+
+if not Response.NONE:
+    Response.NONE = Response(Survey.NONE, "<Empty Response>", 0, 0)

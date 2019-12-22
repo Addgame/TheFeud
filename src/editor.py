@@ -1,11 +1,13 @@
 import os.path as path
+from os import makedirs
 from tkinter import Tk, Label, Entry, Spinbox, Button, PhotoImage, END
 from tkinter.messagebox import askquestion, showerror, showinfo
 
-from survey import Survey
+from src.survey import Survey, SURVEY_DIR
+
+ICON_DIR = r"assets/images/"
 
 
-# TODO: make sure surveys folder exists
 class EditorApp:
     BG_COLOR = "#d9d9d9"
     BUTTON_COLOR = "#dfdfdf"
@@ -15,7 +17,8 @@ class EditorApp:
         # Main Window
         root.geometry("480x240")
         root.title("The Feud Survey Editor")
-        root.iconphoto(True, PhotoImage(file=path.realpath(r"..\assets\images\icon.png")))
+        #
+        root.iconphoto(True, PhotoImage(file=path.realpath(ICON_DIR + r"/icon.png")))
         root.configure(background=self.BG_COLOR)
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         # File Name
@@ -78,7 +81,7 @@ class EditorApp:
             if ret == "no":
                 return
         # Attempt load survey from file
-        survey = Survey.load_survey_file(path.realpath(r"..\surveys\\" + self.fn_entry.get() + ".survey"))
+        survey = Survey.load_survey_file(path.realpath(SURVEY_DIR + self.fn_entry.get() + ".survey"))
         if not survey:
             showerror("Error", "Could not load the survey from given filename")
             return
@@ -137,7 +140,9 @@ class EditorApp:
                 return
         survey = Survey(survey_dict)
         # Confirm overwrite and save
-        filepath = path.realpath(r"..\surveys\\" + self.fn_entry.get() + ".survey")
+        if not path.exists(SURVEY_DIR):
+            makedirs(SURVEY_DIR)
+        filepath = path.realpath(SURVEY_DIR + self.fn_entry.get() + ".survey")
         if path.exists(filepath):
             ret = askquestion("Confirm Action",
                               "Saving this will overwrite an existing file. Are you sure you want to continue?")
