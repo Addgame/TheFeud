@@ -1,6 +1,6 @@
 import os.path as path
 from os import makedirs
-from tkinter import Tk, Label, Entry, Spinbox, Button, PhotoImage, END
+from tkinter import Tk, Label, Entry, Spinbox, Button, PhotoImage, END, Frame
 from tkinter.messagebox import askquestion, showerror, showinfo
 
 from src.survey import Survey, SURVEY_DIR
@@ -14,48 +14,42 @@ class EditorApp:
 
     def __init__(self, root):
         self.root = root
-        # Main Window
+        # Main Window Config
         root.geometry("480x240")
         root.title("The Feud Survey Editor")
-        #
         root.iconphoto(True, PhotoImage(file=path.realpath(ICON_DIR + r"/icon.png")))
         root.configure(background=self.BG_COLOR)
         root.protocol("WM_DELETE_WINDOW", self.on_close)
         # File Name
-        Label(root, text="File Name", background=self.BG_COLOR).grid(row=0, column=0)
-        self.fn_entry = Entry(root, width=46)
-        self.fn_entry.grid(row=0, column=1, columnspan=3, rowspan=1, sticky="W")
+        Label(root, text="File Name", background=self.BG_COLOR).grid(row=0, column=0, columnspan=2)
+        self.fn_entry = Entry(root, width=43)
+        self.fn_entry.grid(row=0, column=2, columnspan=6, rowspan=1, sticky="W")
         # File Load Button
-        Button(root, background=self.BUTTON_COLOR, text="Load", command=self.load, width=16).grid(row=0, column=4)
+        Button(root, background=self.BUTTON_COLOR, text="Load", command=self.load, width=16).grid(row=0, column=8,
+                                                                                                  columnspan=2)
         # Survey Question
-        Label(root, text="Survey Question", background=self.BG_COLOR).grid(row=1, column=0)
+        Label(root, text="Survey Question", background=self.BG_COLOR).grid(row=1, column=0, columnspan=2)
         self.sq_entry = Entry(root, width=63)
-        self.sq_entry.grid(row=1, column=1, columnspan=4, rowspan=1, sticky="W")
-        # Set Up Response Lists
-        self.entries = []
-        self.spinboxes = []
+        self.sq_entry.grid(row=1, column=2, columnspan=8, rowspan=1, sticky="W")
+        # Set Up Response List
+        self.responses = []
         # Responses
         for i in range(8):
-            label = Label(root, text=str(i + 1), background=self.BG_COLOR)
-            entry = Entry(root, width=25)
-            self.entries.append(entry)
-            spinbox = Spinbox(root, width=3, from_=1, to=100)
-            self.spinboxes.append(spinbox)
+            widget = ResponseEntryWidget(root, i + 1)
             if i < 4:
-                label.grid(row=3 + i, column=0, sticky="W", padx=14)
-                entry.grid(row=3 + i, column=0, columnspan=2, sticky="E")
-                spinbox.grid(row=3 + i, column=2, sticky="W")
+                sticky = "W"
             else:
-                label.grid(row=3 + (i - 4), column=3, sticky="W", padx=8)
-                entry.grid(row=3 + (i - 4), column=3, columnspan=2, padx=25, sticky="W")
-                spinbox.grid(row=3 + (i - 4), column=4, padx=18, sticky="E")
+                sticky = "E"
+            widget.grid(row=(i % 4) + 3, column=5 * int(i / 4), columnspan=5, sticky=sticky)
+            self.responses.append(widget)
         # Save and Clear Buttons
-        Button(root, text="Save", command=self.save, background=self.BUTTON_COLOR, width=16).grid(row=8, column=1)
-        Button(root, text="Clear", command=self.clear, background=self.BUTTON_COLOR, width=16).grid(row=8, column=3)
+        Button(root, text="Save", command=self.save, background=self.BUTTON_COLOR, width=16).grid(row=8, column=2,
+                                                                                                  columnspan=2)
+        Button(root, text="Clear", command=self.clear, background=self.BUTTON_COLOR, width=16).grid(row=8, column=6,
+                                                                                                    columnspan=2)
         # Set Up Rows and Columns
         for i in range(10):
             root.grid_rowconfigure(i, weight=1, uniform="all")
-        for i in range(5):
             root.grid_columnconfigure(i, weight=1, uniform="col")
 
     def on_close(self):
@@ -72,7 +66,7 @@ class EditorApp:
             edited = True
         else:
             for i in range(8):
-                if self.entries[i].get() or self.spinboxes[i].get() != "1":
+                if self.responses[i].entry.get() or self.responses[i].spinbox.get() != "1":
                     edited = True
                     break
         if edited:
@@ -92,14 +86,14 @@ class EditorApp:
         self.sq_entry.insert(0, survey.question)
         # Get responses and counts from survey
         for i in range(8):
-            self.entries[i].delete(0, END)
-            self.spinboxes[i].delete(0, END)
+            self.responses[i].entry.delete(0, END)
+            self.responses[i].spinbox.delete(0, END)
             if i < survey.num_responses:
                 current_response = survey.responses[i]
-                self.entries[i].insert(0, current_response.phrase)
-                self.spinboxes[i].insert(0, str(current_response.count))
+                self.responses[i].entry.insert(0, current_response.phrase)
+                self.responses[i].spinbox.insert(0, str(current_response.count))
             else:
-                self.spinboxes[i].insert(0, "1")
+                self.responses[i].spinbox.insert(0, "1")
         # Tell the survey ID
         showinfo("Notice", "Loaded survey with ID: {}".format(survey.id))
 
@@ -114,8 +108,8 @@ class EditorApp:
         prev_count = 100
         for i in range(8):
             try:
-                current_response = self.entries[i].get()
-                current_count = int(self.spinboxes[i].get())
+                current_response = self.responses[i].entry.get()
+                current_count = int(self.responses[i].spinbox.get())
                 if not 1 <= current_count <= 100:
                     raise ValueError
                 if current_response:
@@ -174,9 +168,19 @@ class EditorApp:
         self.fn_entry.delete(0, END)
         self.sq_entry.delete(0, END)
         for i in range(8):
-            self.entries[i].delete(0, END)
-            self.spinboxes[i].delete(0, END)
-            self.spinboxes[i].insert(0, "1")
+            self.responses[i].entry.delete(0, END)
+            self.responses[i].spinbox.delete(0, END)
+            self.responses[i].spinbox.insert(0, "1")
+
+
+class ResponseEntryWidget(Frame):
+    def __init__(self, root, response_number):
+        super().__init__(root, bg=EditorApp.BG_COLOR)
+        Label(self, text=str(response_number), bg=EditorApp.BG_COLOR).grid(row=0, column=0)
+        self.entry = Entry(self, width=30)
+        self.entry.grid(row=0, column=1)
+        self.spinbox = Spinbox(self, width=3, from_=1, to=100)
+        self.spinbox.grid(row=0, column=2)
 
 
 if __name__ == '__main__':
