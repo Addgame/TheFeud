@@ -621,22 +621,6 @@ class GraphicsManager:
         self.scaling = Vector2()
         self.clock = pygame.time.Clock()
 
-        # Create raw images
-        self.raw_logo_left = pygame.image.load(ASSET_DIR + r"\images\logo_left.png")
-        self.raw_logo_right = pygame.image.load(ASSET_DIR + r"\images\logo_right.png")
-        self.raw_main_board = pygame.image.load(ASSET_DIR + r"\images\main_board.png")
-        self.raw_main_card_revealed = pygame.image.load(ASSET_DIR + r"\images\answer_card.png")
-        self.raw_main_card_hidden = list()
-        hidden_bg = pygame.image.load(ASSET_DIR + r"\images\hidden_card.png")
-        for i in range(8):
-            num_image = pygame.image.load(ASSET_DIR + r"\images\{}.png".format(i + 1))
-            current_image = hidden_bg.copy()
-            current_image.blit(num_image, self.MAIN_CARDS_RANK_NUM_ON_CARD)
-            self.raw_main_card_hidden.append(current_image)
-        self.raw_strike = pygame.image.load(ASSET_DIR + r"\images\strike.png")
-        self.raw_fm_board = pygame.image.load(ASSET_DIR + r"\images\fast_money_board.png")
-        self.raw_fm_red_box = pygame.image.load(ASSET_DIR + r"\images\fast_money_red_box.png")
-
         # Create static objects
         self.main_bg = None
         self.fm_bg = None
@@ -708,15 +692,15 @@ class GraphicsManager:
 
     def scale_image(self, image):
         """
-        Gets a scaled copy of the image provided
+        Gets a scaled and converted copy of the image provided
 
         :param image: the image to scale
 
-        :return: a scaled copy of the image
+        :return: a scaled and converted copy of the image
         """
         return pygame.transform.smoothscale(image,
                                             (int(image.get_width() * self.scaling.x),
-                                             int(image.get_height() * self.scaling.y)))
+                                             int(image.get_height() * self.scaling.y))).convert()
 
     @staticmethod
     def vec_to_int_tuple(vec):
@@ -729,16 +713,32 @@ class GraphicsManager:
         :param resolution: the resolution of the new screen (a Vector2 with width and height)
         """
 
+        # Get raw images
+        raw_logo_left = pygame.image.load(ASSET_DIR + r"\images\logo_left.png")
+        raw_logo_right = pygame.image.load(ASSET_DIR + r"\images\logo_right.png")
+        raw_main_board = pygame.image.load(ASSET_DIR + r"\images\main_board.png")
+        raw_main_card_revealed = pygame.image.load(ASSET_DIR + r"\images\answer_card.png")
+        raw_main_card_hidden = list()
+        hidden_bg = pygame.image.load(ASSET_DIR + r"\images\hidden_card.png")
+        for i in range(8):
+            num_image = pygame.image.load(ASSET_DIR + r"\images\{}.png".format(i + 1))
+            current_image = hidden_bg.copy()
+            current_image.blit(num_image, self.MAIN_CARDS_RANK_NUM_ON_CARD)
+            raw_main_card_hidden.append(current_image)
+        raw_strike = pygame.image.load(ASSET_DIR + r"\images\strike.png")
+        raw_fm_board = pygame.image.load(ASSET_DIR + r"\images\fast_money_board.png")
+        raw_fm_red_box = pygame.image.load(ASSET_DIR + r"\images\fast_money_red_box.png")
+        # Update scaling
         self.screen = pygame.display.set_mode(self.vec_to_int_tuple(resolution), pygame.NOFRAME)
         self.scaling.update(resolution.x / self.RAW_RESOLUTION.x, resolution.y / self.RAW_RESOLUTION.y)
         self.resolution = Vector2(resolution)
         # Create scaled images
-        self.main_bg = self.scale_image(self.raw_main_board)
-        self.fm_bg = self.scale_image(self.raw_fm_board)
+        self.main_bg = self.scale_image(raw_main_board)
+        self.fm_bg = self.scale_image(raw_fm_board)
         self.id_display.set_display(self.scale_rect(self.ID_RECT))
-        self.logo_split.set_display(tuple(resolution), self.scale_image(self.raw_logo_left),
-                                    self.scale_image(self.raw_logo_right))
-        self.strikes.set_display(self.scale_rect(self.MAIN_STRIKE_BOX), self.scale_image(self.raw_strike))
+        self.logo_split.set_display(tuple(resolution), self.scale_image(raw_logo_left),
+                                    self.scale_image(raw_logo_right))
+        self.strikes.set_display(self.scale_rect(self.MAIN_STRIKE_BOX), self.scale_image(raw_strike))
         # TODO: make names a thing?
         # self.team_1_name.set_rect(self.scale_rect(self.TEAM_1_NAME_RECT))
         # self.team_2_name.set_rect(self.scale_rect(self.TEAM_2_NAME_RECT))
@@ -751,15 +751,15 @@ class GraphicsManager:
             card_rect.y += (i % 4) * self.MAIN_CARDS_DELTA.y
             self.main_cards[i].set_display(self.scale_rect(card_rect), self.scale_rect(self.MAIN_CARDS_TEXT_IN_CARD),
                                            self.scale_rect(self.MAIN_CARDS_NUMBER_IN_CARD),
-                                           self.scale_image(self.raw_main_card_hidden[i]),
-                                           self.scale_image(self.raw_main_card_revealed))
+                                           self.scale_image(raw_main_card_hidden[i]),
+                                           self.scale_image(raw_main_card_revealed))
         for i in range(len(self.fm_cards)):
             card_rect = self.FM_CARDS_TOPLEFT.copy()
             card_rect.x += int(i / 5) * self.FM_CARDS_DELTA.x
             card_rect.y += (i % 5) * self.FM_CARDS_DELTA.y
             self.fm_cards[i].set_display(self.scale_rect(card_rect), self.scale_rect(self.FM_CARDS_TEXT_IN_CARD),
                                          self.scale_rect(self.FM_CARDS_NUMBER_IN_CARD),
-                                         self.scale_image(self.raw_fm_red_box))
+                                         self.scale_image(raw_fm_red_box))
         self.fm_timer.set_display(self.scale_rect(self.FM_TIMER_RECT))
         self.fm_total_text.set_display(self.scale_rect(self.FM_TOTAL_TEXT))
         self.fm_points.set_display(self.scale_rect(self.FM_TOTAL_NUMBER))
