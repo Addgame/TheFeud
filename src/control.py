@@ -65,14 +65,6 @@ class ControlApp:
                     variable=self.preparing_mode_var).grid(row=0, column=1, padx=2, pady=2)
         self.preparing_selector.grid_columnconfigure(1, weight=1, uniform="prepare_buttons")
         self.preparing_selector.grid(row=0, column=0, padx=10, columnspan=4, sticky=W)
-        # self.name_1_frame = LabelFrame(self.preparing_frame, text="Team 1 Name", bg=self.BG_COLOR)
-        # self.name_1_entry = Entry(self.name_1_frame, width=30)
-        # self.name_1_entry.grid(padx=2, pady=2)
-        # self.name_1_frame.grid(row=0, column=6, columnspan=3)
-        # self.name_2_frame = LabelFrame(self.preparing_frame, text="Team 2 Name", bg=self.BG_COLOR)
-        # self.name_2_entry = Entry(self.name_2_frame, width=30)
-        # self.name_2_entry.grid(padx=2, pady=2)
-        # self.name_2_frame.grid(row=0, column=9, columnspan=3)
 
         # Main Game Preparing
         self.main_preparing_frame = Frame(self.preparing_frame, bg=self.BG_COLOR)

@@ -580,9 +580,6 @@ class GraphicsManager:
 
     ID_RECT = pygame.Rect(1620, 1008, 300, 72)
 
-    TEAM_1_NAME_RECT = pygame.Rect(83, 336, 364, 81)
-    TEAM_2_NAME_RECT = pygame.Rect(1474, 336, 364, 81)
-
     TEAM_1_SCORE_RECT = pygame.Rect(128, 449, 274, 186)
     TEAM_2_SCORE_RECT = pygame.Rect(1518, 449, 274, 186)
     MASTER_SCORE_RECT = pygame.Rect(826, 69, 270, 195)
@@ -629,8 +626,6 @@ class GraphicsManager:
         self.id_display = IDLabel(self.font_helper)
         self.logo_split = LogoSplit()
         self.strikes = StrikeDisplay()
-        # self.team_1_name = TextBox(self.font_helper)
-        # self.team_2_name = TextBox(self.font_helper)
         self.master_score = TextLabel(self.font_helper)
         self.team_1_score = TextLabel(self.font_helper)
         self.team_2_score = TextLabel(self.font_helper)
@@ -646,9 +641,7 @@ class GraphicsManager:
         self.state_groups[0].add(self.logo_split)
         self.state_groups[0].add(self.id_display)
         # Main Game
-        # self.state_groups[1].add(self.team_1_name)
         self.state_groups[1].add(self.team_1_score)
-        # self.state_groups[1].add(self.team_2_name)
         self.state_groups[1].add(self.team_2_score)
         self.state_groups[1].add(self.master_score)
         self.state_groups[1].add(*self.main_cards)
@@ -702,6 +695,18 @@ class GraphicsManager:
                                             (int(image.get_width() * self.scaling.x),
                                              int(image.get_height() * self.scaling.y))).convert()
 
+    def scale_image_alpha(self, image):
+        """
+        Gets a scaled and alpha converted copy of the image provided
+
+        :param image: the image to scale
+
+        :return: a scaled and alpha converted copy of the image
+        """
+        return pygame.transform.smoothscale(image,
+                                            (int(image.get_width() * self.scaling.x),
+                                             int(image.get_height() * self.scaling.y))).convert_alpha()
+
     @staticmethod
     def vec_to_int_tuple(vec):
         return tuple([int(vec.x), int(vec.y)])
@@ -738,10 +743,7 @@ class GraphicsManager:
         self.id_display.set_display(self.scale_rect(self.ID_RECT))
         self.logo_split.set_display(tuple(resolution), self.scale_image(raw_logo_left),
                                     self.scale_image(raw_logo_right))
-        self.strikes.set_display(self.scale_rect(self.MAIN_STRIKE_BOX), self.scale_image(raw_strike))
-        # TODO: make names a thing?
-        # self.team_1_name.set_rect(self.scale_rect(self.TEAM_1_NAME_RECT))
-        # self.team_2_name.set_rect(self.scale_rect(self.TEAM_2_NAME_RECT))
+        self.strikes.set_display(self.scale_rect(self.MAIN_STRIKE_BOX), self.scale_image_alpha(raw_strike))
         self.master_score.set_display(self.scale_rect(self.MASTER_SCORE_RECT))
         self.team_1_score.set_display(self.scale_rect(self.TEAM_1_SCORE_RECT))
         self.team_2_score.set_display(self.scale_rect(self.TEAM_2_SCORE_RECT))
