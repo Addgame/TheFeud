@@ -127,8 +127,6 @@ class Response:
     Acts as a data structure for response info.
     """
 
-    NONE = None
-
     def __init__(self, survey: Survey, phrase: str, count: int, rank: int):
         """
         Set up the data for the response.
@@ -152,7 +150,6 @@ class Response:
 
         :return: boolean equality
         """
-
         if not isinstance(other, Response):
             return False
         return self.survey == other.survey and self.phrase == other.phrase and self.count == other.count and \
@@ -161,6 +158,3 @@ class Response:
 
 if not Survey.NONE:
     Survey.NONE = Survey({"id": "X", "question": "<No Survey Loaded>"})
-
-if not Response.NONE:
-    Response.NONE = Response(Survey.NONE, "<Empty Response>", 0, 0)

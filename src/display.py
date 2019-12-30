@@ -5,7 +5,7 @@ from threading import Lock
 import pygame
 from pygame.math import Vector2
 
-from src.constants import GameState, TICKS_PER_SEC, SILVER, WHITE, MAGENTA, ASSET_DIR
+from src.constants import GameState, TICKS_PER_SEC, TEXT_COLOR, WHITE, MAGENTA, ASSET_DIR
 
 
 class TextLabel(pygame.sprite.Sprite):
@@ -41,7 +41,7 @@ class TextLabel(pygame.sprite.Sprite):
         with GraphicsManager.instance.lock:
             self.image.fill(MAGENTA)
             font = self.font_helper.fits_default(self._text, self.font_guess, self.rect)
-            text_image = font.render(self._text, False, SILVER)
+            text_image = font.render(self._text, False, TEXT_COLOR)
             text_rect = text_image.get_rect()
             text_rect.x = self.rect.width / 2 - text_rect.centerx
             text_rect.y = self.rect.height / 2 - text_rect.centery
@@ -56,7 +56,7 @@ class IDLabel(TextLabel):
     def render(self):
         self.image.fill(MAGENTA)
         font = self.font_helper.fits_default(self._text, self.font_guess, self.rect)
-        text_image = font.render(self._text, False, SILVER)
+        text_image = font.render(self._text, False, TEXT_COLOR)
         text_rect = text_image.get_rect()
         text_rect.x = self.rect.width - text_rect.width
         text_rect.y = self.rect.height - text_rect.height
@@ -145,9 +145,6 @@ class LogoSplit(AnimatedSprite):
         self.end_animation()
 
     def render(self):
-        """
-        Creates the image
-        """
         if not self.is_anim_active():
             if self.closed:
                 self.image.blit(self.full_image, (0, 0))
@@ -173,22 +170,32 @@ class LogoSplit(AnimatedSprite):
 
 class ResponseCard(AnimatedSprite, ABC):
     """
-    A graphical response card
+    A graphical response card abstract class
     """
 
     def __init__(self):
         super().__init__()
-        self._response = None
+        self._phrase = ""
+        self._count = 0
         self.rect = None
         self.image = None
 
     @property
-    def response(self):
-        return self._response
+    def phrase(self):
+        return self._phrase
 
-    @response.setter
-    def response(self, value):
-        self._response = value
+    @phrase.setter
+    def phrase(self, phrase):
+        self._phrase = phrase
+        self.update_images()
+
+    @property
+    def count(self):
+        return self._count
+
+    @count.setter
+    def count(self, count):
+        self._count = count
         self.update_images()
 
     @abstractmethod
@@ -246,20 +253,32 @@ class MainResponseCard(ResponseCard):
             self.end_animation()
         self.render()
 
+    @property
+    def valid(self):
+        return self.phrase and self.count
+
+    def from_response(self, response):
+        if not response:
+            self.phrase = ""
+            self.count = 0
+            return
+        self.phrase = response.phrase
+        self.count = response.count
+
     def update_images(self):
         with GraphicsManager.instance.lock:
             self.image.fill(MAGENTA)
-            if not self.response:
+            if not self.valid:
                 return
             self.revealed_image = self.revealed_bg_image.copy()
-            font = self.font_helper.fits_default(self.response.phrase, self.font_guess, self.text_rect)
-            text_image = font.render(self.response.phrase, False, SILVER)
+            font = self.font_helper.fits_default(self.phrase, self.font_guess, self.text_rect)
+            text_image = font.render(self.phrase, False, TEXT_COLOR)
             rendered_rect = text_image.get_rect()
             rendered_rect.x = self.text_rect.centerx - rendered_rect.centerx
             rendered_rect.y = self.text_rect.centery - rendered_rect.centery
             self.revealed_image.blit(text_image, rendered_rect)
-            font = self.font_helper.fits_default(str(self.response.count), self.font_guess, self.num_rect)
-            num_image = font.render(str(self.response.count), False, SILVER)
+            font = self.font_helper.fits_default(str(self.count), self.font_guess, self.num_rect)
+            num_image = font.render(str(self.count), False, TEXT_COLOR)
             rendered_rect = num_image.get_rect()
             rendered_rect.x = self.num_rect.centerx - rendered_rect.centerx
             rendered_rect.y = self.num_rect.centery - rendered_rect.centery
@@ -271,8 +290,7 @@ class MainResponseCard(ResponseCard):
             self.image.blit(self.hidden_image, (0, 0))
         elif not self.is_anim_active():
             self.image.blit(self.revealed_image, (0, 0))
-        elif self.response:
-            self.image = pygame.Surface(self.rect.size)
+        elif self.valid:
             self.image.blit(self.revealed_image, (0, 0))
             hidden_y = int(self.rect.height * (self.animation_counter / (.2 * TICKS_PER_SEC)))
             self.image.blit(self.hidden_image, (0, hidden_y))
@@ -308,15 +326,6 @@ class FastMoneyResponseCard(ResponseCard):
         self.red_block_width = red_block_image.get_rect().width
         self.update_images()
 
-    @property
-    def given_response(self):
-        return self._given_response
-
-    @given_response.setter
-    def given_response(self, value):
-        self._given_response = value
-        self.update_images()
-
     def reveal_phrase(self):
         self.reveal_stage = self.PHRASE_REVEALED
         self.start_animation()
@@ -334,17 +343,14 @@ class FastMoneyResponseCard(ResponseCard):
         with GraphicsManager.instance.lock:
             self.revealed_image = pygame.Surface(self.rect.size).convert()
             self.revealed_image.fill(MAGENTA)
-            if not self.response:
-                self.render()
-                return
-            font = self.font_helper.fits_default(self.given_response, self.font_guess, self.text_rect)
-            text_image = font.render(self.given_response, False, SILVER)
+            font = self.font_helper.fits_default(self.phrase, self.font_guess, self.text_rect)
+            text_image = font.render(self.phrase, False, TEXT_COLOR)
             rendered_rect = text_image.get_rect()
-            rendered_rect.x = self.text_rect.x + 5  # self.text_rect.centerx - rendered_rect.centerx
+            rendered_rect.x = self.text_rect.x + 5
             rendered_rect.y = self.text_rect.centery - rendered_rect.centery
             self.revealed_image.blit(text_image, rendered_rect)
-            font = self.font_helper.fits_default(str(self.response.count), self.font_guess, self.num_rect)
-            num_image = font.render(str(self.response.count), False, SILVER)
+            font = self.font_helper.fits_default(str(self.count), self.font_guess, self.num_rect)
+            num_image = font.render(str(self.count), False, TEXT_COLOR)
             rendered_rect = num_image.get_rect()
             rendered_rect.x = self.num_rect.centerx - rendered_rect.centerx
             rendered_rect.y = self.num_rect.centery - rendered_rect.centery
@@ -357,7 +363,7 @@ class FastMoneyResponseCard(ResponseCard):
         self.render()
 
     def render(self):
-        if (not self.response) or self.reveal_stage == self.UNREVEALED:
+        if self.reveal_stage == self.UNREVEALED:
             self.image.fill(MAGENTA)
         elif self.reveal_stage == self.COUNT_REVEALED:
             self.image.blit(self.revealed_image, (0, 0))
@@ -458,12 +464,6 @@ class TimerLabel(TextLabel):
     def time(self, seconds):
         self.text = str(seconds)
 
-    def start_countdown(self):
-        self.start_animation()
-
-    def stop_countdown(self):
-        self.end_animation()
-
 
 class FontHelper:
     """
@@ -481,6 +481,12 @@ class FontHelper:
             raise OSError("The given font path is not valid: {}".format(path))
         self.path = path
         self._font_objects = {}
+
+    def clear_cache(self):
+        """
+        Clears the internal font cache
+        """
+        self._font_objects.clear()
 
     def get(self, size):
         """
@@ -703,7 +709,7 @@ class GraphicsManager:
 
         :return: a scaled and alpha converted copy of the image
         """
-        return pygame.transform.smoothscale(image,
+        return pygame.transform.smoothscale(image.convert_alpha(),
                                             (int(image.get_width() * self.scaling.x),
                                              int(image.get_height() * self.scaling.y))).convert_alpha()
 
@@ -717,7 +723,8 @@ class GraphicsManager:
 
         :param resolution: the resolution of the new screen (a Vector2 with width and height)
         """
-
+        # Clear cached fonts
+        self.font_helper.clear_cache()
         # Get raw images
         raw_logo_left = pygame.image.load(ASSET_DIR + r"\images\logo_left.png")
         raw_logo_right = pygame.image.load(ASSET_DIR + r"\images\logo_right.png")
@@ -747,26 +754,32 @@ class GraphicsManager:
         self.master_score.set_display(self.scale_rect(self.MASTER_SCORE_RECT))
         self.team_1_score.set_display(self.scale_rect(self.TEAM_1_SCORE_RECT))
         self.team_2_score.set_display(self.scale_rect(self.TEAM_2_SCORE_RECT))
+        main_cards_text_in_card = self.scale_rect(self.MAIN_CARDS_TEXT_IN_CARD)
+        main_cards_number_in_card = self.scale_rect(self.MAIN_CARDS_NUMBER_IN_CARD)
+        main_card_revealed = self.scale_image(raw_main_card_revealed)
         for i in range(len(self.main_cards)):
             card_rect = self.MAIN_CARDS_TOPLEFT.copy()
             card_rect.x += int(i / 4) * self.MAIN_CARDS_DELTA.x
             card_rect.y += (i % 4) * self.MAIN_CARDS_DELTA.y
-            self.main_cards[i].set_display(self.scale_rect(card_rect), self.scale_rect(self.MAIN_CARDS_TEXT_IN_CARD),
-                                           self.scale_rect(self.MAIN_CARDS_NUMBER_IN_CARD),
+            self.main_cards[i].set_display(self.scale_rect(card_rect), main_cards_text_in_card,
+                                           main_cards_number_in_card,
                                            self.scale_image(raw_main_card_hidden[i]),
-                                           self.scale_image(raw_main_card_revealed))
+                                           main_card_revealed)
+        fm_cards_text_in_card = self.scale_rect(self.FM_CARDS_TEXT_IN_CARD)
+        fm_cards_number_in_card = self.scale_rect(self.FM_CARDS_NUMBER_IN_CARD)
+        fm_red_box = self.scale_image_alpha(raw_fm_red_box)
         for i in range(len(self.fm_cards)):
             card_rect = self.FM_CARDS_TOPLEFT.copy()
             card_rect.x += int(i / 5) * self.FM_CARDS_DELTA.x
             card_rect.y += (i % 5) * self.FM_CARDS_DELTA.y
-            self.fm_cards[i].set_display(self.scale_rect(card_rect), self.scale_rect(self.FM_CARDS_TEXT_IN_CARD),
-                                         self.scale_rect(self.FM_CARDS_NUMBER_IN_CARD),
-                                         self.scale_image(raw_fm_red_box))
+            self.fm_cards[i].set_display(self.scale_rect(card_rect), fm_cards_text_in_card,
+                                         fm_cards_number_in_card,
+                                         fm_red_box)
         self.fm_timer.set_display(self.scale_rect(self.FM_TIMER_RECT))
         self.fm_total_text.set_display(self.scale_rect(self.FM_TOTAL_TEXT))
         self.fm_points.set_display(self.scale_rect(self.FM_TOTAL_NUMBER))
 
-    def update_display(self, state):
+    def update(self, state):
         """
         Updates and then draws all the sprites in the given state
 

@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['src\\editor.py'],
-             pathex=['C:\\Users\\Adam\\Documents\\Programming\\FamilyFeud'],
+             pathex=[],
              binaries=[],
              datas=[('assets/images/icon.png', 'assets/images')],
              hiddenimports=[],
@@ -21,7 +21,7 @@ exe = EXE(pyz,
           a.scripts,
           [],
           exclude_binaries=True,
-          name='Family Feud Editor',
+          name='The Feud Editor',
           debug=False,
           bootloader_ignore_signals=False,
           strip=False,
@@ -34,4 +34,4 @@ coll = COLLECT(exe,
                strip=False,
                upx=True,
                upx_exclude=[],
-               name='Family Feud Editor')
+               name='The Feud Editor')

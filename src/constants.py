@@ -25,9 +25,6 @@ ASSET_DIR = r"assets\\"
 TICKS_PER_SEC = 20
 
 # Colors
-BLANK = Color(0, 0, 0, 0)
-BLACK = Color("black")
 WHITE = Color("white")
-SILVER = Color(192, 192, 192)
-LIGHT_GRAY = Color(208, 208, 208)
+TEXT_COLOR = Color(192, 192, 192)
 MAGENTA = Color("magenta")

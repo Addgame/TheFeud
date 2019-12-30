@@ -174,6 +174,10 @@ class EditorApp:
 
 
 class ResponseEntryWidget(Frame):
+    """
+    A widget for editor responses
+    """
+
     def __init__(self, root, response_number):
         super().__init__(root, bg=EditorApp.BG_COLOR)
         Label(self, text=str(response_number), bg=EditorApp.BG_COLOR).grid(row=0, column=0)
