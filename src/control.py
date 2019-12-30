@@ -46,7 +46,7 @@ class ControlApp:
         self.mode_buttons = []
         for state in GameState:
             rb = Radiobutton(mode_frame, text=str(state), bg=self.BUTTON_COLOR, indicator=0, padx=19, value=state.value,
-                             variable=self.mode_var, state=DISABLED if 1 <= state.value <= 7 else NORMAL)
+                             variable=self.mode_var, state=DISABLED if 1 <= state.value <= 6 else NORMAL)
             rb.grid(row=0, column=state.value, padx=2, pady=2, sticky=N + S + E + W)
             self.mode_buttons.append(rb)
             mode_frame.grid_columnconfigure(state.value, weight=1, uniform="mode_buttons")
@@ -57,42 +57,42 @@ class ControlApp:
 
         self.preparing_mode_var = IntVar(value=0)
         self.preparing_mode_var.trace_add("write", self.select_preparing_mode)
-        preparing_selector = LabelFrame(self.preparing_frame, text="Preparing Mode", bg=self.BG_COLOR)
-        Radiobutton(preparing_selector, text="Main Game", bg=self.BUTTON_COLOR, indicator=0, padx=10, value=0,
+        preparing_selector_frame = LabelFrame(self.preparing_frame, text="Preparing Mode", bg=self.BG_COLOR)
+        Radiobutton(preparing_selector_frame, text="Main Game", bg=self.BUTTON_COLOR, indicator=0, padx=10, value=0,
                     variable=self.preparing_mode_var).grid(row=0, column=0, padx=2, pady=2)
-        preparing_selector.grid_columnconfigure(0, weight=1, uniform="prepare_buttons")
-        Radiobutton(preparing_selector, text="Fast Money", bg=self.BUTTON_COLOR, indicator=0, padx=10, value=1,
+        preparing_selector_frame.grid_columnconfigure(0, weight=1, uniform="prepare_buttons")
+        Radiobutton(preparing_selector_frame, text="Fast Money", bg=self.BUTTON_COLOR, indicator=0, padx=10, value=1,
                     variable=self.preparing_mode_var).grid(row=0, column=1, padx=2, pady=2)
-        preparing_selector.grid_columnconfigure(1, weight=1, uniform="prepare_buttons")
-        preparing_selector.grid(row=0, column=0, padx=10, columnspan=4, sticky=W)
+        preparing_selector_frame.grid_columnconfigure(1, weight=1, uniform="prepare_buttons")
+        preparing_selector_frame.grid(row=0, column=0, padx=10, columnspan=4, sticky=W)
 
-        preparing_reset = LabelFrame(self.preparing_frame, text="Reset", bg=self.BG_COLOR)
-        Button(preparing_reset, text="Main Game Scores", bg=self.BUTTON_COLOR, padx=10,
+        preparing_reset_frame = LabelFrame(self.preparing_frame, text="Reset", bg=self.BG_COLOR)
+        Button(preparing_reset_frame, text="Main Game Scores", bg=self.BUTTON_COLOR, padx=10,
                command=self.reset_main_scores).grid(
             row=0,
             column=0,
             padx=2,
             pady=2)
-        preparing_reset.grid_columnconfigure(0, weight=1, uniform="prepare_reset")
-        Button(preparing_reset, text="Fast Money State", bg=self.BUTTON_COLOR, padx=10,
+        preparing_reset_frame.grid_columnconfigure(0, weight=1, uniform="prepare_reset")
+        Button(preparing_reset_frame, text="Fast Money State", bg=self.BUTTON_COLOR, padx=10,
                command=self.reset_fm_state).grid(
             row=0,
             column=1,
             padx=2,
             pady=2)
-        preparing_reset.grid_columnconfigure(1, weight=1, uniform="prepare_reset")
-        preparing_reset.grid(row=0, column=8, columnspan=4, sticky=E)
+        preparing_reset_frame.grid_columnconfigure(1, weight=1, uniform="prepare_reset")
+        preparing_reset_frame.grid(row=0, column=8, columnspan=4, sticky=E)
 
         # Main Game Preparing
         self.main_preparing_frame = Frame(self.preparing_frame, bg=self.BG_COLOR)
-        self.main_current_survey_prep_widget = LargeSurveyWidget(self.main_preparing_frame, Survey.NONE,
-                                                                 text="Current Survey")
-        self.main_current_survey_prep_widget.grid(row=0, column=0, rowspan=2, padx=4, pady=2)
-        self.main_survey_preview_widget = LargeSurveyWidget(self.main_preparing_frame, Survey.NONE,
-                                                            text="Survey Preview")
-        self.main_survey_preview_widget.grid(row=0, column=1, rowspan=2, padx=4, pady=2)
-        self.main_survey_list = SurveyList(self.main_preparing_frame, self.set_main_preview_survey)
-        self.main_survey_list.grid(row=0, column=2, padx=4, pady=2)
+        self.main_preparing_current_survey_widget = LargeSurveyWidget(self.main_preparing_frame, Survey.NONE,
+                                                                      text="Current Survey")
+        self.main_preparing_current_survey_widget.grid(row=0, column=0, rowspan=2, padx=4, pady=2)
+        self.main_preparing_survey_preview_widget = LargeSurveyWidget(self.main_preparing_frame, Survey.NONE,
+                                                                      text="Survey Preview")
+        self.main_preparing_survey_preview_widget.grid(row=0, column=1, rowspan=2, padx=4, pady=2)
+        self.main_survey_list_widget = SurveyListWidget(self.main_preparing_frame, self.set_main_preview_survey)
+        self.main_survey_list_widget.grid(row=0, column=2, padx=4, pady=2)
         Button(self.main_preparing_frame, text="Set As Current", command=self.set_main_survey_from_preview,
                bg=self.BUTTON_COLOR).grid(
             row=1,
@@ -101,10 +101,10 @@ class ControlApp:
 
         # Fast Money Preparing
         self.fm_preparing_frame = Frame(self.preparing_frame, bg=self.BG_COLOR)
-        self.fm_survey_preview = LargeSurveyWidget(self.fm_preparing_frame, Survey.NONE, text="Survey Preview")
-        self.fm_survey_preview.grid(row=0, column=0)
-        self.fm_survey_list = SurveyList(self.fm_preparing_frame, self.set_fm_preview_survey)
-        self.fm_survey_list.grid(row=0, column=1)
+        self.fm_survey_preview_widget = LargeSurveyWidget(self.fm_preparing_frame, Survey.NONE, text="Survey Preview")
+        self.fm_survey_preview_widget.grid(row=0, column=0)
+        self.fm_survey_list_widget = SurveyListWidget(self.fm_preparing_frame, self.set_fm_preview_survey)
+        self.fm_survey_list_widget.grid(row=0, column=1)
         timer_frame = LabelFrame(self.fm_preparing_frame, text="Timer", bg=self.BG_COLOR)
         Label(timer_frame, text="First Player:", bg=self.BG_COLOR).grid(row=0, column=0)
         self.timer_spin_1 = Spinbox(timer_frame, width=2, from_=1, to=99)
@@ -116,11 +116,11 @@ class ControlApp:
                command=self.set_fm_timer_defaults).grid(row=2, column=0, columnspan=2)
         self.set_fm_timer_defaults()
         timer_frame.grid(row=0, column=2)
-        self.fm_survey_widgets = []
+        self.fm_preparing_survey_widgets = []
         for i in range(5):
-            self.fm_survey_widgets.append(
+            self.fm_preparing_survey_widgets.append(
                 SmallSurveyWidget(self.fm_preparing_frame, Survey.NONE, text="Survey " + str(i + 1)))
-            self.fm_survey_widgets[i].grid(row=1 + 2 * int(i / 3), column=i % 3)
+            self.fm_preparing_survey_widgets[i].grid(row=1 + 2 * int(i / 3), column=i % 3)
             Button(self.fm_preparing_frame, text="Set From Preview", bg=self.BUTTON_COLOR,
                    command=lambda num=i: self.set_fm_survey_from_selected(num)).grid(
                 row=2 + 2 * int(i / 3), column=i % 3)
@@ -129,7 +129,7 @@ class ControlApp:
         self.select_preparing_mode()
 
         # Main Game
-        self.active_team = IntVar(value=1)
+        self.active_team_var = IntVar(value=1)
         self.main_game_frame = Frame(root, bg=self.BG_COLOR)
         self.main_survey_game_widget = SmallSurveyWidget(self.main_game_frame, Survey.NONE, text="Survey")
         self.main_survey_game_widget.grid(row=0, column=0)
@@ -140,24 +140,28 @@ class ControlApp:
 
         self.main_team_1_score_var = StringVar(value="0", name="mt1sv")
         self.main_team_1_score_var.trace_add("write", self.validate_manual_score)
-        self.main_team_1_score = Entry(scoring_frame, textvariable=self.main_team_1_score_var, width=6, justify=RIGHT)
-        self.main_team_1_score.grid(row=0, column=1)
+        self.main_team_1_score_entry = Entry(scoring_frame, textvariable=self.main_team_1_score_var, width=6,
+                                             justify=RIGHT)
+        self.main_team_1_score_entry.grid(row=0, column=1)
         Label(scoring_frame, text="Points:", bg=self.BG_COLOR).grid(row=0, column=2)
         self.main_total_score_var = StringVar(value="0", name="mtsv")
         self.main_total_score_var.trace_add("write", self.validate_manual_score)
-        self.main_total_score = Entry(scoring_frame, textvariable=self.main_total_score_var, width=6, justify=RIGHT)
-        self.main_total_score.grid(row=0, column=3)
+        self.main_total_score_entry = Entry(scoring_frame, textvariable=self.main_total_score_var, width=6,
+                                            justify=RIGHT)
+        self.main_total_score_entry.grid(row=0, column=3)
         Label(scoring_frame, text="Team 2:", bg=self.BG_COLOR).grid(row=0, column=4)
         self.main_team_2_score_var = StringVar(value="0", name="mt2sv")
         self.main_team_2_score_var.trace_add("write", self.validate_manual_score)
-        self.main_team_2_score = Entry(scoring_frame, textvariable=self.main_team_2_score_var, width=6, justify=RIGHT)
-        self.main_team_2_score.grid(row=0, column=5)
+        self.main_team_2_score_entry = Entry(scoring_frame, textvariable=self.main_team_2_score_var, width=6,
+                                             justify=RIGHT)
+        self.main_team_2_score_entry.grid(row=0, column=5)
         Radiobutton(scoring_frame, text="Team 1 Active", bg=self.BUTTON_COLOR, indicator=0,
-                    value=1, variable=self.active_team).grid(row=1, column=0, columnspan=2)
-        Button(scoring_frame, text="Give to Active", bg=self.BUTTON_COLOR,
-               command=self.give_points_to_active).grid(row=1, column=2, columnspan=2)
+                    value=1, variable=self.active_team_var).grid(row=1, column=0, columnspan=2)
+        self.give_points_button = Button(scoring_frame, text="Give to Active", bg=self.BUTTON_COLOR,
+                                         command=self.give_points_to_active)
+        self.give_points_button.grid(row=1, column=2, columnspan=2)
         Radiobutton(scoring_frame, text="Team 2 Active", bg=self.BUTTON_COLOR, indicator=0, value=2,
-                    variable=self.active_team).grid(row=1, column=4, columnspan=2)
+                    variable=self.active_team_var).grid(row=1, column=4, columnspan=2)
 
         strikes_frame = LabelFrame(self.main_game_frame, text="Strikes", bg=self.BG_COLOR)
         strikes_frame.grid(row=1, column=0)
@@ -173,28 +177,29 @@ class ControlApp:
         self.round_frame = LabelFrame(self.main_game_frame, text="Round", bg=self.BG_COLOR)
         self.round_frame.grid(row=1, column=1)
         self.static_round_number = 1
-        self.round_number = IntVar(value=1)
-        self.round_number.trace_add("write", self.update_score_multiplier)
+        self.round_number_var = IntVar(value=1)
+        self.round_number_var.trace_add("write", self.update_score_multiplier)
         for i in range(3):
             Radiobutton(self.round_frame, text="Round " + str(i + 1), bg=self.BUTTON_COLOR, indicator=0, value=i + 1,
-                        variable=self.round_number).grid(row=0, column=i)
+                        variable=self.round_number_var).grid(row=0, column=i)
 
-        self.main_responses_list = MainSurveyResponsesWidget(self.main_game_frame, Survey.NONE,
-                                                             self.set_main_response_visibility, text="Responses")
-        self.main_responses_list.grid(row=2, column=0, columnspan=2)
+        self.main_responses_widget = MainSurveyResponsesWidget(self.main_game_frame, Survey.NONE,
+                                                               self.set_main_response_visibility, text="Responses")
+        self.main_responses_widget.grid(row=2, column=0, columnspan=2)
 
         # Fast Money
         self.fast_money_frame = Frame(root, bg=self.BG_COLOR)
-        # place the responses from player here
         fm_player_responses_frame = Frame(self.fast_money_frame, bg=self.BG_COLOR)
         Label(fm_player_responses_frame, text="Player 1", bg=self.BG_COLOR).grid(row=0, column=0)
         Label(fm_player_responses_frame, text="Player 2", bg=self.BG_COLOR).grid(row=0, column=1)
         self.selected_fm_response_var = IntVar(value=0)
         self.selected_fm_response_var.trace_add('write', self.change_selected_fm_response)
-        self.fm_player_responses = FastMoneyPlayerResponsesWidget(self.fast_money_frame, self.selected_fm_response_var,
-                                                                  self.show_fm_response_phrase,
-                                                                  self.show_fm_response_count, self.hide_fm_response)
-        self.fm_player_responses.grid(row=0, column=0, columnspan=3)
+        self.fm_player_responses_widget = FastMoneyPlayerResponsesWidget(self.fast_money_frame,
+                                                                         self.selected_fm_response_var,
+                                                                         self.show_fm_response_phrase,
+                                                                         self.show_fm_response_count,
+                                                                         self.hide_fm_response)
+        self.fm_player_responses_widget.grid(row=0, column=0, columnspan=3)
         self.fm_selected_survey_widget = SmallSurveyWidget(self.fast_money_frame, Survey.NONE,
                                                            text="Survey of Selected")
         self.fm_selected_survey_widget.grid(row=1, column=0)
@@ -215,9 +220,9 @@ class ControlApp:
         Radiobutton(visibility_frame, text="Hide", bg=self.BUTTON_COLOR, indicator=0, variable=self.visibility_var,
                     value=0).grid(row=0, column=1)
         visibility_frame.grid(row=3, column=0)
-        self.fm_responses_link = FastMoneySurveyResponsesWidget(self.fast_money_frame, Survey.NONE,
-                                                                self.fm_link_to_selected)
-        self.fm_responses_link.grid(row=1, column=1, rowspan=2)
+        self.fm_survey_responses_widget = FastMoneySurveyResponsesWidget(self.fast_money_frame, Survey.NONE,
+                                                                         self.fm_link_to_selected)
+        self.fm_survey_responses_widget.grid(row=1, column=1, rowspan=2)
 
         self.preparing_frame.grid(row=1, column=0, columnspan=12)
 
@@ -244,6 +249,12 @@ class ControlApp:
         if current_state == new_state:
             return
         self.update_display_ids()
+        if new_state == GameState.STEALING:
+            self.active_team_var.set(int(self.active_team_var.get() != 2) + 1)
+        if new_state == GameState.REVEALING:
+            self.give_points_button.configure(state=DISABLED)
+        else:
+            self.give_points_button.configure(state=NORMAL)
         if current_state == GameState.PREPARING:
             self.preparing_frame.grid_forget()
         if new_state == GameState.PREPARING:
@@ -257,18 +268,18 @@ class ControlApp:
                 self.current_strikes_label.grid(row=0, column=0)
                 self.strikes_spin.grid(row=0, column=1)
             if new_state == GameState.TIEBREAKER:
-                self.round_number.set(3)
+                self.round_number_var.set(3)
                 self.round_frame.grid_forget()
             else:
                 self.round_frame.grid(row=1, column=1)
             if current_state == GameState.PREPARING or current_state == GameState.TIEBREAKER or (
                     new_state == GameState.TIEBREAKER and
                     GameState.FACE_OFF.value <= current_state.value <= GameState.REVEALING.value):
-                new_survey = self.main_current_survey_prep_widget.survey
+                new_survey = self.main_preparing_current_survey_widget.survey
                 if new_state == GameState.TIEBREAKER:
                     new_survey = self.make_tiebreaker_survey(new_survey)
                 # The order of these two is extremely important
-                self.main_responses_list.survey = new_survey
+                self.main_responses_widget.survey = new_survey
                 self.main_survey_game_widget.survey = new_survey
                 #
                 for i in range(8):
@@ -307,35 +318,35 @@ class ControlApp:
         if not self.preparing_mode_var.get():
             self.fm_preparing_frame.grid_forget()
             self.main_preparing_frame.grid(row=1, column=0, columnspan=12)
-            self.main_survey_list.reload()
+            self.main_survey_list_widget.reload()
         # Fast Money
         else:
             self.main_preparing_frame.grid_forget()
             self.fm_preparing_frame.grid(row=1, column=0, columnspan=12)
-            self.fm_survey_list.reload()
+            self.fm_survey_list_widget.reload()
         self.update_display_ids()
 
     def update_display_ids(self):
         if self.preparing_mode_var.get() == self.PREPARING_MAIN and self.mode is not GameState.FAST_MONEY:
-            self.display_manager.id_display.text = self.main_current_survey_prep_widget.survey.id
+            self.display_manager.id_display.text = self.main_preparing_current_survey_widget.survey.id
         else:
             id_string = ""
             for i in range(5):
-                id_string += str(self.fm_survey_widgets[i].survey.id)[0:4] + ". "
+                id_string += str(self.fm_preparing_survey_widgets[i].survey.id)[0:4] + ". "
             id_string.rstrip()
             self.display_manager.id_display.text = id_string
 
     # Main Game operations
     def set_main_preview_survey(self):
-        self.main_survey_preview_widget.survey = self.main_survey_list.selected
+        self.main_preparing_survey_preview_widget.survey = self.main_survey_list_widget.selected
 
     def set_main_survey_from_preview(self):
-        if self.main_survey_preview_widget.survey == Survey.NONE:
+        if self.main_preparing_survey_preview_widget.survey == Survey.NONE:
             return
-        if self.main_current_survey_prep_widget.survey == Survey.NONE:
+        if self.main_preparing_current_survey_widget.survey == Survey.NONE:
             for i in range(1, 6):
                 self.mode_buttons[i].configure(state=NORMAL)
-        self.main_current_survey_prep_widget.survey = self.main_survey_preview_widget.survey
+        self.main_preparing_current_survey_widget.survey = self.main_preparing_survey_preview_widget.survey
         self.update_display_ids()
 
     def set_main_response_visibility(self, rank, visible):
@@ -375,7 +386,7 @@ class ControlApp:
 
     def update_score_multiplier(self, *_):
         old_mult = self.static_round_number
-        new_mult = self.round_number.get()
+        new_mult = self.round_number_var.get()
 
         new_total = int((new_mult * int(self.main_total_score_var.get())) / old_mult)
         self.main_total_score_var.set(str(new_total))
@@ -400,7 +411,7 @@ class ControlApp:
         return False
 
     def give_points_to_active(self):
-        if self.active_team.get() == 1:
+        if self.active_team_var.get() == 1:
             current_score = int(self.main_team_1_score_var.get())
             current_score += int(self.main_total_score_var.get())
             self.main_team_1_score_var.set(str(current_score))
@@ -442,19 +453,19 @@ class ControlApp:
         self.display_manager.fm_timer.time = self.timer_spin_2.get()
 
     def set_fm_survey_from_selected(self, survey_num):
-        self.fm_survey_widgets[survey_num].survey = self.fm_survey_preview.survey
+        self.fm_preparing_survey_widgets[survey_num].survey = self.fm_survey_preview_widget.survey
         if self.mode_buttons[GameState.FAST_MONEY.value]["state"] == "disabled":
             for i in range(5):
-                if self.fm_survey_widgets[i].survey == Survey.NONE:
+                if self.fm_preparing_survey_widgets[i].survey == Survey.NONE:
                     break
             else:
                 self.mode_buttons[GameState.FAST_MONEY.value].configure(state=NORMAL)
         self.update_display_ids()
 
     def set_fm_preview_survey(self):
-        if self.fm_survey_list.selected == Survey.NONE:
+        if self.fm_survey_list_widget.selected == Survey.NONE:
             return
-        self.fm_survey_preview.survey = self.fm_survey_list.selected
+        self.fm_survey_preview_widget.survey = self.fm_survey_list_widget.selected
 
     def show_fm_response_phrase(self, index, phrase):
         card = self.display_manager.fm_cards[index]
@@ -478,12 +489,12 @@ class ControlApp:
             self.display_manager.fm_points.text = str(curr_count - card.count)
         card.hide()
 
-    def fm_link_to_selected(self, response):
-        self.fm_player_responses.set_response(self.selected_fm_response_var.get(), response)
+    def fm_link_to_selected(self, count):
+        self.fm_player_responses_widget.set_response(self.selected_fm_response_var.get(), count)
 
     def change_selected_fm_response(self, *_):
-        survey = self.fm_survey_widgets[self.selected_fm_response_var.get() % 5].survey
-        self.fm_responses_link.survey = survey
+        survey = self.fm_preparing_survey_widgets[self.selected_fm_response_var.get() % 5].survey
+        self.fm_survey_responses_widget.survey = survey
         self.fm_selected_survey_widget.survey = survey
 
     def update_fm_visible(self, *_):
@@ -493,7 +504,7 @@ class ControlApp:
             self.display_manager.logo_split.open()
 
     def reset_fm_state(self):
-        self.fm_player_responses.reset()
+        self.fm_player_responses_widget.reset()
 
 
 class ResponseWidget(Frame):
@@ -504,7 +515,7 @@ class ResponseWidget(Frame):
         self.rank_label.grid(row=0, column=0, sticky=W)
 
         self.columnconfigure(1, weight=1)
-        self.phrase_label = Label(self, text="<Empty Response>", bg=ControlApp.BG_COLOR,
+        self.phrase_label = Label(self, text=Response.BLANK_PHRASE, bg=ControlApp.BG_COLOR,
                                   justify="left", wraplength=106)
         self.phrase_label.grid(row=0, column=1, sticky=W)
 
@@ -528,7 +539,7 @@ class ResponseWidget(Frame):
         self.count_label.configure(text=" | Count: " + str(self.response.count))
 
 
-class SurveyWidget(LabelFrame, ABC):
+class AbstractSurveyWidget(LabelFrame, ABC):
     def __init__(self, root, survey, **kwargs):
         super().__init__(root, bg=ControlApp.BG_COLOR, **kwargs)
         self._survey = survey
@@ -551,7 +562,7 @@ class SurveyWidget(LabelFrame, ABC):
         pass
 
 
-class SmallSurveyWidget(SurveyWidget):
+class SmallSurveyWidget(AbstractSurveyWidget):
     def __init__(self, root, survey, **kwargs):
         super().__init__(root, survey, **kwargs)
         Label(self, text="ID: ", bg=ControlApp.BG_COLOR).grid(row=0, column=0)
@@ -580,7 +591,8 @@ class LargeSurveyWidget(SmallSurveyWidget):
             if i < self.survey.num_responses:
                 self.response_widgets.append(ResponseWidget(self, self.survey.responses[i]))
             else:
-                self.response_widgets.append(ResponseWidget(self, Response(self.survey, "<Empty Response>", 0, i + 1)))
+                self.response_widgets.append(
+                    ResponseWidget(self, Response(self.survey, Response.BLANK_PHRASE, 0, i + 1)))
             self.response_widgets[i].grid(row=3 + i, column=0, columnspan=2, sticky=W + E)
 
     def update(self):
@@ -589,10 +601,10 @@ class LargeSurveyWidget(SmallSurveyWidget):
             if i < self.survey.num_responses:
                 self.response_widgets[i].response = self.survey.responses[i]
             else:
-                self.response_widgets[i].response = Response(self.survey, "<Empty Response>", 0, i + 1)
+                self.response_widgets[i].response = Response(self.survey, Response.BLANK_PHRASE, 0, i + 1)
 
 
-class MainSurveyResponsesWidget(SurveyWidget):
+class MainSurveyResponsesWidget(AbstractSurveyWidget):
     def __init__(self, root, survey, command, **kwargs):
         super().__init__(root, survey, **kwargs)
 
@@ -605,7 +617,8 @@ class MainSurveyResponsesWidget(SurveyWidget):
                 self.visibility_buttons.append(Button(self, text="Show", bg=ControlApp.BUTTON_COLOR,
                                                       command=lambda num=i: self.toggle_button(num)))
             else:
-                self.response_widgets.append(ResponseWidget(self, Response(self.survey, "<Empty Response>", 0, i + 1)))
+                self.response_widgets.append(
+                    ResponseWidget(self, Response(self.survey, Response.BLANK_PHRASE, 0, i + 1)))
                 self.visibility_buttons.append(Button(self, text="Show", bg=ControlApp.BUTTON_COLOR, state=DISABLED,
                                                       command=lambda num=i: self.toggle_button(num)))
             self.response_widgets[i].grid(row=i % 4, column=2 * int(i / 4))
@@ -627,7 +640,7 @@ class MainSurveyResponsesWidget(SurveyWidget):
                 self.response_widgets[i].response = self.survey.responses[i]
                 self.visibility_buttons[i].configure(text="Show", state=NORMAL)
             else:
-                self.response_widgets[i].response = Response(self.survey, "<Empty Response>", 0, i + 1)
+                self.response_widgets[i].response = Response(self.survey, Response.BLANK_PHRASE, 0, i + 1)
                 self.visibility_buttons[i].configure(text="Show", state=DISABLED)
 
     def reset(self):
@@ -637,7 +650,7 @@ class MainSurveyResponsesWidget(SurveyWidget):
                 self.toggle_button(i)
 
 
-class FastMoneySurveyResponsesWidget(SurveyWidget):
+class FastMoneySurveyResponsesWidget(AbstractSurveyWidget):
     def __init__(self, root, survey, command, **kwargs):
         super().__init__(root, survey, **kwargs)
 
@@ -650,7 +663,8 @@ class FastMoneySurveyResponsesWidget(SurveyWidget):
                 self.link_buttons.append(Button(self, text="Link", bg=ControlApp.BUTTON_COLOR,
                                                 command=lambda num=i: self.link_response(num)))
             else:
-                self.response_widgets.append(ResponseWidget(self, Response(self.survey, "<Empty Response>", 0, i + 1)))
+                self.response_widgets.append(
+                    ResponseWidget(self, Response(self.survey, Response.BLANK_PHRASE, 0, i + 1)))
                 self.link_buttons.append(Button(self, text="Link", bg=ControlApp.BUTTON_COLOR, state=DISABLED,
                                                 command=lambda num=i: self.link_response(num)))
             self.response_widgets[i].grid(row=i % 4, column=2 * int(i / 4))
@@ -660,9 +674,9 @@ class FastMoneySurveyResponsesWidget(SurveyWidget):
 
     def link_response(self, i):
         if i == -1:
-            self.linking_handler(Response(self.survey, "<Empty Response>", 0, 0))
+            self.linking_handler(0)
         else:
-            self.linking_handler(self.survey.responses[i])
+            self.linking_handler(self.survey.responses[i].count)
 
     def update(self):
         for i in range(8):
@@ -670,7 +684,7 @@ class FastMoneySurveyResponsesWidget(SurveyWidget):
                 self.response_widgets[i].response = self.survey.responses[i]
                 self.link_buttons[i].configure(state=NORMAL)
             else:
-                self.response_widgets[i].response = Response(self.survey, "<Empty Response>", 0, i + 1)
+                self.response_widgets[i].response = Response(self.survey, Response.BLANK_PHRASE, 0, i + 1)
                 self.link_buttons[i].configure(state=DISABLED)
 
 
@@ -714,8 +728,8 @@ class FastMoneyPlayerResponsesWidget(Frame):
             self.response_infos.append(
                 self.ResponseInfo(current_entry, current_var, current_reveal_button, current_count_button))
 
-    def set_response(self, i, response):
-        self.response_infos[i].score_var.set(str(response.count))
+    def set_response(self, i, count):
+        self.response_infos[i].score_var.set(str(count))
 
     def reveal_clicked(self, i):
         response_info = self.response_infos[i]
@@ -739,7 +753,7 @@ class FastMoneyPlayerResponsesWidget(Frame):
             response_info.score_var.set("0")
 
 
-class SurveyList(Frame):
+class SurveyListWidget(Frame):
     def __init__(self, root, select_cb, **kwargs):
         super().__init__(root, bg=ControlApp.BG_COLOR, **kwargs)
         Label(self, text="Survey List", bg=ControlApp.BG_COLOR).grid(row=0, column=0, sticky=W)

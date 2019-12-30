@@ -127,6 +127,8 @@ class Response:
     Acts as a data structure for response info.
     """
 
+    BLANK_PHRASE = "<Empty Response>"
+
     def __init__(self, survey: Survey, phrase: str, count: int, rank: int):
         """
         Set up the data for the response.

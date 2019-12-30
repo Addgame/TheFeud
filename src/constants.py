@@ -11,8 +11,7 @@ class GameState(Enum):
     REVEALING, \
     TIEBREAKER, \
     FAST_MONEY, \
-    CREDITS, \
-        = range(8)
+        = range(7)
 
     def __str__(self):
         return self.name.replace("_", " ").title()
@@ -26,5 +25,5 @@ TICKS_PER_SEC = 20
 
 # Colors
 WHITE = Color("white")
-TEXT_COLOR = Color(192, 192, 192)
+TEXT_COLOR = WHITE
 MAGENTA = Color("magenta")

@@ -54,13 +54,14 @@ class IDLabel(TextLabel):
     """
 
     def render(self):
-        self.image.fill(MAGENTA)
-        font = self.font_helper.fits_default(self._text, self.font_guess, self.rect)
-        text_image = font.render(self._text, False, TEXT_COLOR)
-        text_rect = text_image.get_rect()
-        text_rect.x = self.rect.width - text_rect.width
-        text_rect.y = self.rect.height - text_rect.height
-        self.image.blit(text_image, text_rect)
+        with GraphicsManager.instance.lock:
+            self.image.fill(MAGENTA)
+            font = self.font_helper.fits_default(self._text, self.font_guess, self.rect)
+            text_image = font.render(self._text, False, TEXT_COLOR)
+            text_rect = text_image.get_rect()
+            text_rect.x = self.rect.width - text_rect.width
+            text_rect.y = self.rect.height - text_rect.height
+            self.image.blit(text_image, text_rect)
 
 
 class AnimatedSprite(pygame.sprite.Sprite, ABC):
@@ -358,8 +359,8 @@ class FastMoneyResponseCard(ResponseCard):
         self.render()
 
     def tick(self):
-        if self.animation_counter >= 4 * TICKS_PER_SEC:
-            self.animation_counter = 2 * TICKS_PER_SEC
+        if self.animation_counter >= 3 * TICKS_PER_SEC:
+            self.animation_counter = 1 * TICKS_PER_SEC
         self.render()
 
     def render(self):
@@ -370,14 +371,14 @@ class FastMoneyResponseCard(ResponseCard):
         elif self.reveal_stage == self.PHRASE_REVEALED:
             self.image.fill(MAGENTA)
             temp_width = (self.text_rect.width - self.red_block_width) * min(1.0, self.animation_counter / (
-                    2 * TICKS_PER_SEC))
+                    1 * TICKS_PER_SEC))
             temp_rect = pygame.Rect(0, 0, temp_width, self.rect.height)
             self.image.blit(self.revealed_image, (0, 0), temp_rect)
-            if self.animation_counter < 2 * TICKS_PER_SEC:
+            if self.animation_counter < 1 * TICKS_PER_SEC:
                 # revealing phrase
                 temp_rect.x = temp_rect.width
                 self.image.blit(self.red_block_image, temp_rect)
-            elif self.animation_counter < 3 * TICKS_PER_SEC:
+            elif self.animation_counter < 2 * TICKS_PER_SEC:
                 # flashing red box over count
                 self.image.blit(self.red_block_image, self.num_rect.topleft)
 
@@ -627,6 +628,7 @@ class GraphicsManager:
         # Create static objects
         self.main_bg = None
         self.fm_bg = None
+        self.small_logo = None
 
         # Create sprite objects
         self.id_display = IDLabel(self.font_helper)
@@ -642,7 +644,7 @@ class GraphicsManager:
         self.fm_points = TextLabel(self.font_helper)
 
         # Add sprites to groups for the different states
-        self.state_groups = list(pygame.sprite.OrderedUpdates() for _ in range(4))
+        self.state_groups = list(pygame.sprite.OrderedUpdates() for _ in range(3))
         # Logo
         self.state_groups[0].add(self.logo_split)
         self.state_groups[0].add(self.id_display)
@@ -661,8 +663,6 @@ class GraphicsManager:
         self.state_groups[2].add(self.fm_timer)
         self.state_groups[2].add(self.logo_split)
         self.state_groups[2].add(self.id_display)
-        # Credits State
-        self.state_groups[3].add(self.logo_split)
 
         # Create the display screen and update sprite images
         os.environ["SDL_VIDEO_CENTERED"] = '1'
@@ -738,6 +738,7 @@ class GraphicsManager:
             current_image.blit(num_image, self.MAIN_CARDS_RANK_NUM_ON_CARD)
             raw_main_card_hidden.append(current_image)
         raw_strike = pygame.image.load(ASSET_DIR + r"\images\strike.png")
+        raw_small_logo = pygame.image.load(ASSET_DIR + r"\images\small_logo.png")
         raw_fm_board = pygame.image.load(ASSET_DIR + r"\images\fast_money_board.png")
         raw_fm_red_box = pygame.image.load(ASSET_DIR + r"\images\fast_money_red_box.png")
         # Update scaling
@@ -765,6 +766,7 @@ class GraphicsManager:
                                            main_cards_number_in_card,
                                            self.scale_image(raw_main_card_hidden[i]),
                                            main_card_revealed)
+        self.small_logo = self.scale_image_alpha(raw_small_logo)
         fm_cards_text_in_card = self.scale_rect(self.FM_CARDS_TEXT_IN_CARD)
         fm_cards_number_in_card = self.scale_rect(self.FM_CARDS_NUMBER_IN_CARD)
         fm_red_box = self.scale_image_alpha(raw_fm_red_box)
@@ -791,13 +793,13 @@ class GraphicsManager:
         elif state == GameState.FAST_MONEY:
             current_group = self.state_groups[2]
             self.screen.blit(self.fm_bg, (0, 0))
-        elif state == GameState.CREDITS:
-            current_group = self.state_groups[3]
         else:
             current_group = self.state_groups[1]
             self.screen.blit(self.main_bg, (0, 0))
         with self.lock:
             current_group.update()
             current_group.draw(self.screen)
+        if state == GameState.REVEALING:
+            self.screen.blit(self.small_logo, self.master_score.rect.topleft)
         pygame.display.flip()
         self.clock.tick(TICKS_PER_SEC)
