@@ -267,6 +267,7 @@ class MainResponseCard(ResponseCard):
         self.count = response.count
 
     def update_images(self):
+        self.end_animation()
         with GraphicsManager.instance.lock:
             self.image.fill(MAGENTA)
             if not self.valid:
@@ -341,6 +342,7 @@ class FastMoneyResponseCard(ResponseCard):
         self.render()
 
     def update_images(self):
+        self.end_animation()
         with GraphicsManager.instance.lock:
             self.revealed_image = pygame.Surface(self.rect.size).convert()
             self.revealed_image.fill(MAGENTA)
