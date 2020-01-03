@@ -8,12 +8,18 @@ from tkinter.messagebox import askquestion
 
 import pygame
 
+from src.audio import AudioManager
 from src.constants import GameState, ASSET_DIR
 from src.display import GraphicsManager, FastMoneyResponseCard
 from src.survey import Survey, Response
 
 
 class ControlApp:
+    """
+    The main central control class for the entire game
+    Creates the display and audio managers along with a GUI to control everything
+    """
+
     BG_COLOR = "#d9d9d9"
     BUTTON_COLOR = "#dfdfdf"
     LISTBOX_COLOR = "#d0d0d0"
@@ -35,6 +41,9 @@ class ControlApp:
         self.quitting = False
         self.display_manager.team_1_score.text = "0"
         self.display_manager.team_2_score.text = "0"
+
+        # Setup audio
+        self.audio_manager = AudioManager()
 
         # Mode Selection (the game state)
         self.mode = GameState.PREPARING
@@ -230,6 +239,10 @@ class ControlApp:
         self.fm_survey_responses_widget = FastMoneySurveyResponsesWidget(self.fast_money_frame, Survey.NONE,
                                                                          self.fm_link_to_selected)
         self.fm_survey_responses_widget.grid(row=1, column=1, rowspan=2)
+        retry_sound_frame = LabelFrame(self.fast_money_frame, text="Try Again Sound", bg=self.BG_COLOR)
+        Button(retry_sound_frame, text="Play", bg=self.BUTTON_COLOR, command=self.audio_manager.play_try_again,
+               padx=30).grid(sticky=W + E, padx=2, pady=2)
+        retry_sound_frame.grid(row=3, column=1, sticky=W, padx=7, pady=2)
 
         self.preparing_frame.grid(row=1, column=0)
 
@@ -261,6 +274,8 @@ class ControlApp:
             self.give_points_button.configure(state=DISABLED)
         else:
             self.give_points_button.configure(state=NORMAL)
+        if current_state == GameState.FAST_MONEY and self.fm_timer_toggle_button["text"] == "Stop":
+            self.toggle_fm_timer()
         if current_state == GameState.PREPARING:
             self.preparing_frame.grid_forget()
         if new_state == GameState.PREPARING:
@@ -363,6 +378,7 @@ class ControlApp:
     def set_main_response_visibility(self, rank, visible):
         current_score = int(self.main_total_score_var.get())
         if visible:
+            self.audio_manager.play_correct()
             self.display_manager.main_cards[rank].reveal()
             current_score += self.static_round_number * self.main_survey_game_widget.survey.responses[rank].count
         else:
@@ -407,6 +423,7 @@ class ControlApp:
         self.static_round_number = new_mult
 
     def press_strike_button(self):
+        self.audio_manager.play_strike()
         if self.mode == GameState.FACE_OFF or self.mode == GameState.STEALING or self.mode == GameState.TIEBREAKER:
             self.display_manager.strikes.show_strikes(1)
             return
@@ -450,6 +467,8 @@ class ControlApp:
         if self.fm_timer_toggle_button["text"] == "Start":
             return
         self.display_manager.fm_timer.time -= 1
+        if self.display_manager.fm_timer.time == 0:
+            self.audio_manager.play_timer_end()
         self.root.after(1000, self.fm_timer_tick)
 
     def set_fm_timer_defaults(self):
@@ -486,6 +505,7 @@ class ControlApp:
             curr_count = int(self.display_manager.fm_points.text)
             self.display_manager.fm_points.text = str(curr_count - card.count)
         card.reveal_phrase()
+        self.audio_manager.play_fm_reveal()
 
     def show_fm_response_count(self, index, count):
         card = self.display_manager.fm_cards[index]
@@ -493,6 +513,10 @@ class ControlApp:
         card.reveal_value()
         curr_count = int(self.display_manager.fm_points.text)
         self.display_manager.fm_points.text = str(curr_count + count)
+        if count:
+            self.audio_manager.play_correct()
+        else:
+            self.audio_manager.play_fm_wrong()
 
     def hide_fm_response(self, index):
         card = self.display_manager.fm_cards[index]
@@ -520,6 +544,10 @@ class ControlApp:
 
 
 class ResponseWidget(Frame):
+    """
+    Widget to display a single response
+    """
+
     def __init__(self, root, response):
         super().__init__(root, bg=ControlApp.BG_COLOR)
         self._response = response
@@ -554,6 +582,10 @@ class ResponseWidget(Frame):
 
 
 class AbstractSurveyWidget(LabelFrame, ABC):
+    """
+    Common abstract widget subclass that simplifies dealing with a survey in a widget
+    """
+
     def __init__(self, root, survey, **kwargs):
         super().__init__(root, bg=ControlApp.BG_COLOR, **kwargs)
         self._survey = survey
@@ -577,6 +609,10 @@ class AbstractSurveyWidget(LabelFrame, ABC):
 
 
 class SmallSurveyWidget(AbstractSurveyWidget):
+    """
+    Widget that shows survey ID and question
+    """
+
     def __init__(self, root, survey, **kwargs):
         super().__init__(root, survey, **kwargs)
         Label(self, text="ID: ", bg=ControlApp.BG_COLOR).grid(row=0, column=0)
@@ -597,6 +633,10 @@ class SmallSurveyWidget(AbstractSurveyWidget):
 
 
 class LargeSurveyWidget(SmallSurveyWidget):
+    """
+    Widget that shows survey ID, question, and all responses
+    """
+
     def __init__(self, root, survey, **kwargs):
         super().__init__(root, survey, **kwargs)
 
@@ -621,6 +661,10 @@ class LargeSurveyWidget(SmallSurveyWidget):
 
 
 class MainSurveyResponsesWidget(AbstractSurveyWidget):
+    """
+    Widget for controlling visibility of responses for main game
+    """
+
     def __init__(self, root, survey, command, **kwargs):
         super().__init__(root, survey, **kwargs)
 
@@ -670,6 +714,10 @@ class MainSurveyResponsesWidget(AbstractSurveyWidget):
 
 
 class FastMoneySurveyResponsesWidget(AbstractSurveyWidget):
+    """
+    Widget for linking to actual survey responses for fast money
+    """
+
     def __init__(self, root, survey, command, **kwargs):
         super().__init__(root, survey, **kwargs)
 
@@ -709,6 +757,10 @@ class FastMoneySurveyResponsesWidget(AbstractSurveyWidget):
 
 
 class FastMoneyPlayerResponsesWidget(Frame):
+    """
+    Widget where operator writes fast money player responses controls fast money response visibility
+    """
+
     class ResponseInfo:
         def __init__(self, entry, score_var, reveal_button, hide_button):
             self.entry = entry
@@ -778,6 +830,10 @@ class FastMoneyPlayerResponsesWidget(Frame):
 
 
 class SurveyListWidget(Frame):
+    """
+    A Listbox with all the survey names plus a button to reload the list
+    """
+
     def __init__(self, root, select_cb, **kwargs):
         super().__init__(root, bg=ControlApp.BG_COLOR, **kwargs)
         Label(self, text="Survey List", bg=ControlApp.BG_COLOR).grid(row=0, column=0, sticky=W)

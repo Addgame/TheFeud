@@ -305,6 +305,10 @@ class FastMoneyResponseCard(ResponseCard):
 
     UNREVEALED, PHRASE_REVEALED, COUNT_REVEALED = range(3)
 
+    PHRASE_REVEAL_TIME = int(.5 * TICKS_PER_SEC)
+    HALF_FLASH_TIME = int(.5 * TICKS_PER_SEC)
+    TOTAL_TIME = PHRASE_REVEAL_TIME + 2 * HALF_FLASH_TIME
+
     def __init__(self, font_helper):
         super().__init__()
         self.reveal_stage = self.UNREVEALED
@@ -361,8 +365,8 @@ class FastMoneyResponseCard(ResponseCard):
         self.render()
 
     def tick(self):
-        if self.animation_counter >= 3 * TICKS_PER_SEC:
-            self.animation_counter = 1 * TICKS_PER_SEC
+        if self.animation_counter >= self.TOTAL_TIME:
+            self.animation_counter = self.PHRASE_REVEAL_TIME
         self.render()
 
     def render(self):
@@ -373,14 +377,14 @@ class FastMoneyResponseCard(ResponseCard):
         elif self.reveal_stage == self.PHRASE_REVEALED:
             self.image.fill(MAGENTA)
             temp_width = (self.text_rect.width - self.red_block_width) * min(1.0, self.animation_counter / (
-                    1 * TICKS_PER_SEC))
+                self.PHRASE_REVEAL_TIME))
             temp_rect = pygame.Rect(0, 0, temp_width, self.rect.height)
             self.image.blit(self.revealed_image, (0, 0), temp_rect)
-            if self.animation_counter < 1 * TICKS_PER_SEC:
+            if self.animation_counter < self.PHRASE_REVEAL_TIME:
                 # revealing phrase
                 temp_rect.x = temp_rect.width
                 self.image.blit(self.red_block_image, temp_rect)
-            elif self.animation_counter < 2 * TICKS_PER_SEC:
+            elif self.animation_counter < (self.PHRASE_REVEAL_TIME + self.HALF_FLASH_TIME):
                 # flashing red box over count
                 self.image.blit(self.red_block_image, self.num_rect.topleft)
 
